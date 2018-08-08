@@ -7,6 +7,9 @@
 -- 6. Delete function will auto call base class destructor after call drived class destructor.
 -- 7. Avoid cover general function with virtual function list. All virtual function must to add virtual attribute.
 -- 8. Avoid derived class member cover base class member. NOTE: Only have effect when use in function. In out side of function have not effect.
+-- TODO: Allow in out side of function to operate class member.
+-- TODO: Allow to replace function.
+-- TODO: Support private function.
 
 local TABLE_TYPE = {
 	Class = "Class",
@@ -165,7 +168,7 @@ function Object:inherit(className)
 						end
 						self = classMembers
 					end
-					originFunc(self, ...)
+					return originFunc(self, ...)
 				end
 				v = funcWrapper
 			end

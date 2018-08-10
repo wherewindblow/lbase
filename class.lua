@@ -31,8 +31,8 @@ function assertFmt(v, fmt, ...)
 	end
 end
 
--- New object and will call create.
--- NOTE: Cannot override this function. Override create to custom.
+-- New object and will call constructor.
+-- NOTE: Cannot override this function. Override constructor to custom.
 function Object:new(...)
 	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local obj = {
@@ -67,29 +67,29 @@ function Object:new(...)
 
 	-- Check expect call function have be called.
 	for func, callInfo in pairs(obj.__expectCall) do
-		assertFmt(callInfo.callTimes ~= 0, "%s:%s expect to be call by %s:create, but not (May have called but not call finishCall).", callInfo.className, callInfo.funcName, self.__className)
+		assertFmt(callInfo.callTimes ~= 0, "%s:%s expect to be call by %s:constructor, but not (May have called but not call finishCall).", callInfo.className, callInfo.funcName, self.__className)
 	end
 	obj.__expectCall = nil -- Don't need after finish check.
 
 	return obj
 end
 
--- NOTE: Must call all expect call function in it.
 -- Can be override by derived class.
+-- NOTE: Must call all expect call function in it.
 function Object:constructor(...)
 
 end
 
--- Delete object and will call all destroy.
--- NOTE: Cannot override this function. Override destroy to custom.
+-- Delete object and will call all destructor.
+-- NOTE: Cannot override this function. Override destructor to custom.
 function Object:delete()
 	assertFmt(self.__type == TABLE_TYPE.Object, "Must call by object.")
-	-- Call all destroy function.
+	-- Call all destructor.
 	local Class = self:getClass()
 	while Class do
-		local destroy = rawget(Class, "destroy")
-		if destroy then
-			destroy(self)
+		local destructor = rawget(Class, "destructor")
+		if destructor then
+			destructor(self)
 		end
 		Class = super(Class)
 	end

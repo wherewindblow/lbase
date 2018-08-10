@@ -7,8 +7,8 @@
 -- 6. Delete function will auto call base class destructor after call drived class destructor.
 -- 7. Avoid cover general function with virtual function list. All virtual function must to add virtual attribute.
 -- 8. Avoid derived class member cover base class member. NOTE: Only have effect when use in function. In out side of function have not effect.
--- TODO: Allow in out side of function to operate class member.
--- TODO: Allow to replace function.
+--    When in class function to use self, all member create in self is private.
+--    When out of class function to use object, all member create in object is public.
 -- TODO: Support private function.
 
 local TABLE_TYPE = {
@@ -44,11 +44,11 @@ function Object:new(...)
 		for funcName, _ in pairs(Class.__expectCall) do
 			local func = rawget(Class, funcName)
 			if not func then
-				assert(false, string.format("Not exist expect call function %s:%s", Class:getClassName(), funcName))
+				assert(false, string.format("Not exist expect call function %s:%s", Class.__className, funcName))
 			end
 
 			obj.__expectCall[func] = {
-				className = Class:getClassName(),
+				className = Class.__className,
 				funcName = funcName,
 				callTimes = 0,
 			}
@@ -64,7 +64,7 @@ function Object:new(...)
 	-- Check expect call function have be called.
 	for func, callInfo in pairs(obj.__expectCall) do
 		if callInfo.callTimes == 0 then
-			assert(false, string.format("%s:%s expect to be call by %s:create, but not (May have called but not call finishCall).", callInfo.className, callInfo.funcName, self:getClassName()))
+			assert(false, string.format("%s:%s expect to be call by %s:create, but not (May have called but not call finishCall).", callInfo.className, callInfo.funcName, self.__className))
 		end
 	end
 	obj.__expectCall = nil -- Don't need after finish check.
@@ -107,7 +107,6 @@ function Object:inherit(className)
 	local Class = {
 		__className = className,
 		__type = TABLE_TYPE.Class,
-		__baseClass = self,
 		__expectCall = {},
 		__virtualFuncList = {},
 	}
@@ -122,55 +121,34 @@ function Object:inherit(className)
 				if t[funcName] then
 					-- Check is virtual function.
 					local isVirtualFunc
-					local curClass = Class
-					while curClass do
-						local virtualFuncList = curClass.__virtualFuncList
+					local CurClass = Class
+					while CurClass do
+						local virtualFuncList = CurClass.__virtualFuncList
 						if virtualFuncList[funcName] then
 							isVirtualFunc = true
 							break
 						end
-						curClass = super(curClass)
+						CurClass = super(CurClass)
 					end
 
 					if not isVirtualFunc then
 						-- Get class name of function.
 						local funcClassName
-						curClass = Class
-						while curClass do
-							local baseFunc = rawget(curClass, funcName)
+						CurClass = Class
+						while CurClass do
+							local baseFunc = rawget(CurClass, funcName)
 							if baseFunc then
-								funcClassName = curClass:getClassName()
+								funcClassName = CurClass.__className
 								break
 							end
-							curClass = super(curClass)
+							CurClass = super(CurClass)
 						end
 
 						assert(false, string.format("Override not virtual function %s:%s, must call setToVirtual to set function to virutal.", funcClassName, funcName))
 					end
 				end
 
-				-- Separate class memeber space to avoid derived class member cover base class member.
-				-- NOTE: Only have effect when use in function. In out side of function have not effect.
-				local originFunc = v
-				local function funcWrapper(self, ...)
-					if self.__type == TABLE_TYPE.Object then
-						local classMembers = self.__members[className]
-						if not classMembers then
-							classMembers = {}
-							-- Don't need weak table. It metatable is already is weak table?
-							--local memberMetable = { __index = self }
-							--setmetatable(memberMetable, {__mod = "v"})
-							--setmetatable(classMembers, memberMetable)
-
-							-- Enable call class function or get object field.
-							setmetatable(classMembers, { __index = self })
-							self.__members[className] = classMembers
-						end
-						self = classMembers
-					end
-					return originFunc(self, ...)
-				end
-				v = funcWrapper
+				v = self:createFunction(v)
 			end
 
 			rawset(t, k, v)
@@ -180,6 +158,45 @@ function Object:inherit(className)
 
 	AllClass[className] = Class
 	return Class
+end
+
+-- Create function that separate class memeber space to avoid derived class member cover base class member.
+-- If want to override function that already create must call this function to create function to ensure behavior is correct.
+-- NOTE: This function must call by class.
+-- NOTE: Only have effect when use in function. In out side of function have not effect.
+--   When in class function to use self, all member create in self is private.
+--   When out of class function to use object, all member create in object is public.
+function Object:createFunction(originFunc)
+	assert(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	local className = self.__className
+	local function funcWrapper(self, ...)
+		if self.__type == TABLE_TYPE.Object then
+			local classMembers = self.__members[className]
+			if not classMembers then
+				classMembers = {}
+				-- Don't need weak table. It metatable is already is weak table?
+				--local memberMetable = { __index = self }
+				--setmetatable(memberMetable, {__mod = "v"})
+				--setmetatable(classMembers, memberMetable)
+
+				-- Enable call class function or get object field.
+				setmetatable(classMembers, { __index = self })
+				self.__members[className] = classMembers
+			end
+			self = classMembers
+		end
+
+		-- The following will be optimize by tail call. And trackback will not show original function name.
+		--return originFunc(self, ...)
+
+		-- To make trackback have original function name, but not efficient.
+		--local ret = {originFunc(self, ...)}
+		--return unpack(ret)
+
+		-- To make trackback have original function name, but will return additional nil.
+		return originFunc(self, ...), nil
+	end
+	return funcWrapper
 end
 
 function Object:getClass()
@@ -226,7 +243,7 @@ function Object:expectCall(funcName)
 	assert(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local func = rawget(self, funcName)
 	if not func then
-		assert(false, string.format("Not exist function %s:%s", self:getClassName(), funcName))
+		assert(false, string.format("Not exist function %s:%s", self.__className, funcName))
 	end
 	self.__expectCall[funcName] = true
 end
@@ -246,7 +263,7 @@ function Object:setToVirtual(funcName)
 	assert(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local func = rawget(self, funcName)
 	if not func then
-		assert(false, string.format("Not exist function %s:%s", self:getClassName(), funcName))
+		assert(false, string.format("Not exist function %s:%s", self.__className, funcName))
 	end
 	self.__virtualFuncList[funcName] = true
 end

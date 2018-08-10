@@ -150,7 +150,7 @@ function Object:inherit(className)
 					end
 				end
 
-				v = self:createFunction(v)
+				v = Class:createFunction(v)
 			end
 
 			rawset(t, k, v)

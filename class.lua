@@ -25,10 +25,16 @@ Object = {
 
 AllClass = { [Object.__className] = Object }
 
+function assertFmt(v, fmt, ...)
+	if not v then
+		assert(false, string.format(fmt, ...))
+	end
+end
+
 -- New object and will call create.
 -- NOTE: Cannot override this function. Override create to custom.
 function Object:new(...)
-	assert(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local obj = {
 		__type = TABLE_TYPE.Object,
 		__expectCall = {},
@@ -43,9 +49,7 @@ function Object:new(...)
 	while Class do
 		for funcName, _ in pairs(Class.__expectCall) do
 			local func = rawget(Class, funcName)
-			if not func then
-				assert(false, string.format("Not exist expect call function %s:%s", Class.__className, funcName))
-			end
+			assertFmt(func, "Not exist expect call function %s:%s", Class.__className, funcName)
 
 			obj.__expectCall[func] = {
 				className = Class.__className,
@@ -63,9 +67,7 @@ function Object:new(...)
 
 	-- Check expect call function have be called.
 	for func, callInfo in pairs(obj.__expectCall) do
-		if callInfo.callTimes == 0 then
-			assert(false, string.format("%s:%s expect to be call by %s:create, but not (May have called but not call finishCall).", callInfo.className, callInfo.funcName, self.__className))
-		end
+		assertFmt(callInfo.callTimes ~= 0, "%s:%s expect to be call by %s:create, but not (May have called but not call finishCall).", callInfo.className, callInfo.funcName, self.__className)
 	end
 	obj.__expectCall = nil -- Don't need after finish check.
 
@@ -81,7 +83,7 @@ end
 -- Delete object and will call all destroy.
 -- NOTE: Cannot override this function. Override destroy to custom.
 function Object:delete()
-	assert(self.__type == TABLE_TYPE.Object, "Must call by object.")
+	assertFmt(self.__type == TABLE_TYPE.Object, "Must call by object.")
 	-- Call all destroy function.
 	local Class = self:getClass()
 	while Class do
@@ -100,9 +102,9 @@ end
 
 -- NOTE: This function must call by class.
 function Object:inherit(className)
-	assert(self.__type == TABLE_TYPE.Class, "Must call by class.")
-	assert(type(className) == "string", "className must be string.")
-	assert(not AllClass[className], "Aleady exist class " .. className)
+	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(type(className) == "string", "className must be string.")
+	assertFmt(not AllClass[className], "Aleady exist class %s", className)
 
 	local Class = {
 		__className = className,
@@ -144,7 +146,7 @@ function Object:inherit(className)
 							CurClass = super(CurClass)
 						end
 
-						assert(false, string.format("Override not virtual function %s:%s, must call setToVirtual to set function to virutal.", funcClassName, funcName))
+						assertFmt(false, "Override not virtual function %s:%s, must call setToVirtual to set function to virutal.", funcClassName, funcName)
 					end
 				end
 
@@ -167,7 +169,7 @@ end
 --   When in class function to use self, all member create in self is private.
 --   When out of class function to use object, all member create in object is public.
 function Object:createFunction(originFunc)
-	assert(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local className = self.__className
 	local function funcWrapper(self, ...)
 		if self.__type == TABLE_TYPE.Object then
@@ -208,7 +210,7 @@ function Object:getClass()
 			return Class
 		end
 	else
-		assert(false, "Unknow type.")
+		assertFmt(false, "Unknow type %s.", self.__type or "")
 	end
 end
 
@@ -220,7 +222,7 @@ end
 -- NOTE: This function must call by class.
 -- In fact, this function can be call by object, but will make some mistake when use to call base class constructor.
 function Object:getBaseClass()
-	assert(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local metatable = getmetatable(self)
 	if metatable then
 		local BaseClass = metatable.__index
@@ -240,11 +242,9 @@ end
 
 -- NOTE: This function must call by class.
 function Object:expectCall(funcName)
-	assert(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local func = rawget(self, funcName)
-	if not func then
-		assert(false, string.format("Not exist function %s:%s", self.__className, funcName))
-	end
+	assertFmt(func, "Not exist function %s:%s", self.__className, funcName)
 	self.__expectCall[funcName] = true
 end
 
@@ -260,11 +260,9 @@ end
 
 -- NOTE: This function must call by class.
 function Object:setToVirtual(funcName)
-	assert(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local func = rawget(self, funcName)
-	if not func then
-		assert(false, string.format("Not exist function %s:%s", self.__className, funcName))
-	end
+	assertFmt(func, "Not exist function %s:%s", self.__className, funcName)
 	self.__virtualFuncList[funcName] = true
 end
 

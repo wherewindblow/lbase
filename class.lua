@@ -25,9 +25,13 @@ Object = {
 
 AllClass = { [Object.__className] = Object }
 
+function errorFmt(fmt, ...)
+	error(string.format(fmt, ...))
+end
+
 function assertFmt(v, fmt, ...)
 	if not v then
-		assert(false, string.format(fmt, ...))
+		errorFmt(fmt, ...)
 	end
 end
 
@@ -146,7 +150,7 @@ function Object:inherit(className)
 							CurClass = super(CurClass)
 						end
 
-						assertFmt(false, "Override not virtual function %s:%s, must call setToVirtual to set function to virutal.", funcClassName, funcName)
+						errorFmt("Override not virtual function %s:%s, must call setToVirtual to set function to virutal.", funcClassName, funcName)
 					end
 				end
 
@@ -210,7 +214,7 @@ function Object:getClass()
 			return Class
 		end
 	else
-		assertFmt(false, "Unknow type %s.", self.__type or "")
+		errorFmt("Unknow type %s.", self.__type or "")
 	end
 end
 

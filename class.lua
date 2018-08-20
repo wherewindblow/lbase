@@ -11,7 +11,9 @@
 --    When out of class function to use object, all member create in object is public.
 -- TODO: Support private function.
 
-local TABLE_TYPE = {
+require("global")
+
+TABLE_TYPE = {
 	Class = "Class",
 	Object = "Object",
 }
@@ -24,16 +26,6 @@ Object = {
 }
 
 AllClass = { [Object.__className] = Object }
-
-function errorFmt(fmt, ...)
-	error(string.format(fmt, ...))
-end
-
-function assertFmt(v, fmt, ...)
-	if not v then
-		errorFmt(fmt, ...)
-	end
-end
 
 -- New object and will call constructor.
 -- NOTE: Cannot override this function. Override constructor to custom.

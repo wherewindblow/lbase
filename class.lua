@@ -27,6 +27,15 @@ Object = {
 
 AllClass = { [Object.__className] = Object }
 
+function super(self)
+	return self:getBaseClass()
+end
+
+local TABLE_TYPE = TABLE_TYPE
+local assertFmt = assertFmt
+local errorFmt = errorFmt
+local super = super
+
 -- New object and will call constructor.
 -- NOTE: Cannot override this function. Override constructor to custom.
 function Object:new(...)
@@ -63,7 +72,8 @@ function Object:new(...)
 
 	-- Check expect call function have be called.
 	for func, callInfo in pairs(obj.__expectCall) do
-		assertFmt(callInfo.callTimes ~= 0, "%s:%s expect to be call by %s:constructor, but not (May have called but not call finishCall).", callInfo.className, callInfo.funcName, self.__className)
+		assertFmt(callInfo.callTimes ~= 0, "%s:%s expect to be call by %s:constructor, but not (May have called but not call finishCall).",
+				callInfo.className, callInfo.funcName, self.__className)
 	end
 	obj.__expectCall = nil -- Don't need after finish check.
 
@@ -100,7 +110,7 @@ end
 function Object:inherit(className)
 	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	assertFmt(type(className) == "string", "className must be string.")
-	assertFmt(not AllClass[className], "Aleady exist class %s", className)
+	--assertFmt(not AllClass[className], "Aleady exist class %s", className)
 
 	local Class = {
 		__className = className,
@@ -154,7 +164,11 @@ function Object:inherit(className)
 	}
 	setmetatable(Class, metatable)
 
-	AllClass[className] = Class
+	if not AllClass[className] then
+		AllClass[className] = Class
+	else
+		print(string.format("Aleady exist class %s", className))
+	end
 	return Class
 end
 
@@ -232,7 +246,7 @@ function Object:getBaseClass()
 	--end
 end
 
-function Object:getTableType()
+function Object:getType()
 	return self.__type
 end
 
@@ -265,7 +279,3 @@ end
 --Object:expectCall("constructor") -- An example.
 Object:setToVirtual("constructor")
 Object:setToVirtual("destructor")
-
-function super(self)
-	return self:getBaseClass()
-end

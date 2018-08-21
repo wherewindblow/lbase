@@ -43,24 +43,23 @@ function printAny(...)
 
 		local index = printSetting.index
 		local outIndex = string.rep(index, deep)
+		if deep == 1 then
+			print(format("%s %s", outIndex, valueString(any)))
+		end
 		print(format("%s {", outIndex))
 
 		local inIndex = outIndex .. index
 		for k, v in pairs(any) do
-			if true or k ~= "_G" then --
-				if type(v) ~= "table" then
-					print(format("%s[ %s ]%s = [ %s ]%s", inIndex, valueString(k), typeTag(k), valueString(v), typeTag(v)))
+			if type(v) ~= "table" then
+				print(format("%s[ %s ]%s = [ %s ]%s", inIndex, valueString(k), typeTag(k), valueString(v), typeTag(v)))
+			else
+				if not printed[v] then
+					local v_name = format("%s.%s", name, tostring(k))
+					printed[v] = v_name
+					print(format("%s[ %s ]%s = %s", inIndex, valueString(k), typeTag(k), valueString(v)))
+					innerPrint(v, deep + 1, v_name)
 				else
-					if not printed[v] then
-						--print("not printed ", v)
-						--table.print(printed)
-						local v_name = format("%s.%s",name, tostring(k))
-						printed[v] = v_name
-						print(format("%s[ %s ]%s = %s", inIndex, valueString(k), typeTag(k), valueString(v)))
-						innerPrint(v, deep + 1, v_name)
-					else
-						print(format("%s[ %s ]%s = [ %s ]r", inIndex, valueString(k), typeTag(k), printed[v]))
-					end
+					print(format("%s[ %s ]%s = [ %s ]r", inIndex, valueString(k), typeTag(k), printed[v]))
 				end
 			end
 		end

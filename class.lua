@@ -25,7 +25,7 @@ Object = {
 	__virtualFuncList = {},
 }
 
-AllClass = { [Object.__className] = Object }
+AllClass = { [Object.__className] = { Class = Object, source = debug.getinfo(1).source } }
 
 function super(self)
 	return self:getBaseClass()
@@ -110,7 +110,13 @@ end
 function Object:inherit(className)
 	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	assertFmt(type(className) == "string", "className must be string.")
-	--assertFmt(not AllClass[className], "Aleady exist class %s", className)
+
+	local callerInfo = debug.getinfo(2)
+	local classInfo = AllClass[className]
+	if classInfo then
+		-- Avoid register class repeatedly in difference source. But must check by manual when in same source.
+		assertFmt(callerInfo.source == classInfo.source, "Already register class %s in %s", className, classInfo.source)
+	end
 
 	local Class = {
 		__className = className,
@@ -164,10 +170,8 @@ function Object:inherit(className)
 	}
 	setmetatable(Class, metatable)
 
-	if not AllClass[className] then
-		AllClass[className] = Class
-	else
-		print(string.format("Aleady exist class %s", className))
+	if not classInfo then
+		AllClass[className] = { Class = Class, source = callerInfo.source }
 	end
 	return Class
 end

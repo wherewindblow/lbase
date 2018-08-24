@@ -81,3 +81,6 @@ function assertFmt(v, fmt, ...)
 		errorFmt(fmt, ...)
 	end
 end
+
+require("class")
+require("extend")

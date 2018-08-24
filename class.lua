@@ -11,8 +11,6 @@
 --    When out of class function to use object, all member create in object is public.
 -- TODO: Support private function.
 
-require("global")
-
 TABLE_TYPE = {
 	Class = "Class",
 	Object = "Object",

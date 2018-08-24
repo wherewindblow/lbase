@@ -1,5 +1,3 @@
-require("class")
-
 local Utils = {}
 
 -- Update module and ensure all old reference can be update.

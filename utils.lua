@@ -1,5 +1,11 @@
 local Utils = {}
 
+-- Optimize.
+local type = type
+local tostring = tostring
+local format = string.format
+local assertFmt = assertFmt
+
 -- Update module and ensure all old reference can be update.
 -- 1. Use require to load module, so any module must return itself at file ending.
 -- 2. Module can be class or module, module can include class, but cannot include module.
@@ -59,7 +65,7 @@ function Utils.serialize(t)
 
 			local kStr
 			if kType == "string" then
-				kStr = string.format("\"%s\"", tostring(k))
+				kStr = format("\"%s\"", tostring(k))
 			else
 				kStr = tostring(k)
 			end
@@ -70,13 +76,12 @@ function Utils.serialize(t)
 				processTable[v] = true
 				vStr = process(v)
 			elseif vType == "string" then
-				vStr = string.format("\"%s\"", tostring(v))
+				vStr = format("\"%s\"", tostring(v))
 			else
 				vStr = tostring(v)
 			end
 
-			local itemStr = string.format("[%s]=%s,", kStr, vStr)
-			str = str .. itemStr
+			str = format("%s[%s]=%s,", str, kStr, vStr)
 		end
 		str = str .. "}"
 		return str

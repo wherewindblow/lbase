@@ -49,8 +49,8 @@ function Utils.serialize(t)
 		"function"
 	}
 
-	local processTable = {}
-	local function process(t)
+	local processedTable = {}
+	local function process(t, name)
 		if t.serialize and type(t.serialize) == "function" then
 			t = t:serialize()
 		end
@@ -72,9 +72,10 @@ function Utils.serialize(t)
 
 			local vStr
 			if vType == "table" then
-				assertFmt(not processTable[v], "Process %s repeat, cannot serialize circle reference table.")
-				processTable[v] = true
-				vStr = process(v)
+				local vName = format("%s.%s", name, tostring(k))
+				assertFmt(not processedTable[v], "Process %s repeat with %s, cannot serialize circle reference table.", vName, processedTable[v])
+				processedTable[v] = vName
+				vStr = process(v, vName)
 			elseif vType == "string" then
 				vStr = format("\"%s\"", tostring(v))
 			else
@@ -87,8 +88,9 @@ function Utils.serialize(t)
 		return str
 	end
 
-	processTable[t] = true
-	return process(t)
+	local rootName = "root"
+	processedTable[t] = rootName
+	return process(t, rootName)
 end
 
 function Utils.unserialize(str, obj)
@@ -110,7 +112,15 @@ local function serializeTest()
 	list1:add("a")
 	list1:add("b")
 	local list1Str = serialize(list1)
-	local t = {"a", b = {"c", d = {"e"}}}
+	local t = {
+		"a",
+		b = {
+			"c",
+			d = {
+				"e"
+			}
+		}
+	}
 	local tStr = serialize(t)
 
 	local list2 = LinkedList:new()

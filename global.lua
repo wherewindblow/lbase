@@ -27,7 +27,7 @@ local function typeTag(any)
 	return tags[type(any)] or type(any)
 end
 
-local printSetting = { maxDeep = 100, index = "    " }
+local printSetting = { maxDeep = 100, index = "    ", defaultRootName = "root" }
 
 function printAny(...)
 	local printed = {}
@@ -67,7 +67,7 @@ function printAny(...)
 	end
 
 	for _, v in ipairs({...}) do
-		printed[v] = "root"
+		printed[v] = printSetting.defaultRootName
 		innerPrint(v, 1, printed[v])
 	end
 end
@@ -76,11 +76,48 @@ function errorFmt(fmt, ...)
 	error(format(fmt, ...))
 end
 
+-- Optimize assert expression.
 function assertFmt(v, fmt, ...)
 	if not v then
 		errorFmt(fmt, ...)
 	end
 end
+
+local function compareAssert()
+	local exp
+	local assertTimes = 1000000
+	local function computeTimeUse(func)
+		local startTime = os.clock()
+		func()
+		local finishTime = os.clock()
+		print(finishTime - startTime)
+	end
+
+	computeTimeUse(function ()
+		for i = 1, assertTimes do
+			assert(not exp, string.format("failure when i is %d%s", i, "test"))
+		end
+	end)
+
+	computeTimeUse(function ()
+		for i = 1, assertTimes do
+			assertFmt(not exp, "failure when i is %d%s", i, "test")
+		end
+	end)
+
+	computeTimeUse(function ()
+		for i = 1, assertTimes do
+			if exp then
+				error(string.format("failure when i is %d%s", i, "test"))
+			end
+		end
+	end)
+end
+
+--assert timeUse          0.53s
+--assertFmt timeUse       0.05s
+--if assert timeUse       0.01s
+
 
 require("class")
 require("extend")

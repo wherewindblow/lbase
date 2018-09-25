@@ -34,6 +34,14 @@ function Queue:empty()
 	return self.m_list:empty()
 end
 
+function Queue:serialize()
+	return self.m_list:serialize()
+end
+
+function Queue:unserialize(allValue)
+	return self.m_list:unserialize(allValue)
+end
+
 local function test()
 	local queue = Queue:new()
 	queue:push(1)

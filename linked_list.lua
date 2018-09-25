@@ -93,11 +93,37 @@ function LinkedList:empty()
 	return self.m_size == 0
 end
 
+function LinkedList:clear()
+	self:constructor()
+end
+
 function LinkedList:debug()
 	local node = self.m_head
 	while node do
 		print(node, node.value, node.previous, node.next)
 		node = node.next
+	end
+end
+
+function LinkedList:serialize()
+	local iterator = self:iterator()
+	local allValue = {}
+	while true do
+		local value = iterator()
+		if not value then
+			break
+		end
+
+		table.insert(allValue, value)
+	end
+
+	return allValue
+end
+
+function LinkedList:unserialize(allValue)
+	self:clear()
+	for i, v in ipairs(allValue) do
+		self:add(v)
 	end
 end
 

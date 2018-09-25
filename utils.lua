@@ -37,4 +37,92 @@ function Utils.update(module)
 	package.loaded[module] = oldModule
 end
 
+function Utils.serialize(t)
+	local invalidType = {
+		"thread",
+		"function"
+	}
+
+	local processTable = {}
+	local function process(t)
+		if t.serialize and type(t.serialize) == "function" then
+			t = t:serialize()
+		end
+
+		local str = "{"
+		for k, v in pairs(t) do
+			local kType = type(k)
+			local vType = type(v)
+			assertFmt(kType ~= "table", "Key cannot be table.")
+			assertFmt(not invalidType[kType], "Key is invalid type.")
+			assertFmt(not invalidType[vType], "Value is invalid type.")
+
+			local kStr
+			if kType == "string" then
+				kStr = string.format("\"%s\"", tostring(k))
+			else
+				kStr = tostring(k)
+			end
+
+			local vStr
+			if vType == "table" then
+				assertFmt(not processTable[v], "Process %s repeat, cannot serialize circle reference table.")
+				processTable[v] = true
+				vStr = process(v)
+			elseif vType == "string" then
+				vStr = string.format("\"%s\"", tostring(v))
+			else
+				vStr = tostring(v)
+			end
+
+			local itemStr = string.format("[%s]=%s,", kStr, vStr)
+			str = str .. itemStr
+		end
+		str = str .. "}"
+		return str
+	end
+
+	processTable[t] = true
+	return process(t)
+end
+
+function Utils.unserialize(str, obj)
+	local chunk = loadstring("return " .. str)
+	local t = chunk()
+	if obj then
+		obj:unserialize(t)
+		return obj
+	end
+	return t
+end
+
+local function serializeTest()
+	local serialize = Utils.serialize
+	local unserialize = Utils.unserialize
+
+	local LinkedList = require("linked_list")
+	local list1 = LinkedList:new()
+	list1:add("a")
+	list1:add("b")
+	local list1Str = serialize(list1)
+	local t = {"a", b = {"c", d = {"e"}}}
+	local tStr = serialize(t)
+
+	local list2 = LinkedList:new()
+	unserialize(list1Str, list2)
+	local iterator = list2:iterator()
+	assert(iterator() == "a")
+	assert(iterator() == "b")
+	assert(list2:size() == 2)
+	assert(serialize(list2) == list1Str)
+
+	local t2 = unserialize(serialize(t))
+	assert(t2[1] == "a")
+	assert(t2.b[1] == "c")
+	assert(t2.b.d[1] == "e")
+	assert(serialize(t2) == tStr)
+end
+
+serializeTest()
+
 return Utils

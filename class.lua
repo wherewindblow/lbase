@@ -278,6 +278,18 @@ function Object:setToVirtual(funcName)
 	self.__virtualFuncList[funcName] = true
 end
 
+-- Returns table that need to serialize.
+function Object:serialize()
+	error("Must implement serialize by drived class")
+end
+
+-- Unserialize from table that have same structure with serialize return value.
+function Object:unserialize(t)
+	error("Must implement unserialize by drived class")
+end
+
 --Object:expectCall("constructor") -- An example.
 Object:setToVirtual("constructor")
 Object:setToVirtual("destructor")
+Object:setToVirtual("serialize")
+Object:setToVirtual("unserialize")

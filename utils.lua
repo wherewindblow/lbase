@@ -103,7 +103,7 @@ function Utils.unserialize(str, obj)
 	return t
 end
 
-local function serializeTest()
+local function testSerialize()
 	local serialize = Utils.serialize
 	local unserialize = Utils.unserialize
 
@@ -138,6 +138,6 @@ local function serializeTest()
 	assert(serialize(t2) == tStr)
 end
 
-serializeTest()
+testSerialize()
 
 return Utils

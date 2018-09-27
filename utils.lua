@@ -51,7 +51,7 @@ function Utils.serialize(t)
 
 	local processedTable = {}
 	local function process(t, name)
-		if t.serialize and type(t.serialize) == "function" then
+		if t.__type == TABLE_TYPE.Object then
 			t = t:serialize()
 		end
 
@@ -93,12 +93,11 @@ function Utils.serialize(t)
 	return process(t, rootName)
 end
 
-function Utils.unserialize(str, obj)
+function Utils.unserialize(str)
 	local chunk = loadstring("return " .. str)
 	local t = chunk()
-	if obj then
-		obj:unserialize(t)
-		return obj
+	if t.__className then
+		return Object:unserialize(t)
 	end
 	return t
 end
@@ -123,19 +122,51 @@ local function testSerialize()
 	}
 	local tStr = serialize(t)
 
-	local list2 = LinkedList:new()
-	unserialize(list1Str, list2)
+	local list2 = unserialize(list1Str)
 	local iterator = list2:iterator()
 	assert(iterator() == "a")
 	assert(iterator() == "b")
 	assert(list2:size() == 2)
 	assert(serialize(list2) == list1Str)
 
-	local t2 = unserialize(serialize(t))
+	local t2 = unserialize(tStr)
 	assert(t2[1] == "a")
 	assert(t2.b[1] == "c")
 	assert(t2.b.d[1] == "e")
 	assert(serialize(t2) == tStr)
+
+	local Base = Object:inherit("TestSerializeBase")
+
+	local Queue = require("queue")
+	function Base:constructor()
+		self.m_list = LinkedList:new()
+		self.m_list:add(1)
+		self.m_list:add(2)
+		self.m_queue = Queue:new()
+		self.m_queue:push("a")
+		self.m_queue:push("b")
+		self:finishCall(Base.constructor)
+	end
+
+	Base:expectCall("constructor")
+	Base:setSerializableMembers({"m_list", "m_queue"})
+
+	local Derived = Base:inherit("TestSerializeDerived")
+	function Derived:constructor()
+		super(Derived).constructor(self)
+		self.m_name = self:getClassName()
+	end
+
+	Derived:setSerializableMembers({"m_name"})
+
+	local test1 = Derived:new()
+	local test1Str = serialize(test1)
+	local test2 = unserialize(test1Str)
+	assert(serialize(test2) == test1Str)
+
+	AllClass["TestSerializeBase"] = nil
+	AllClass["TestSerializeDerived"] = nil
+	printAny(AllClass)
 end
 
 testSerialize()

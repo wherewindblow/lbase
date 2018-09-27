@@ -105,25 +105,30 @@ function LinkedList:debug()
 	end
 end
 
-function LinkedList:serialize()
-	local iterator = self:iterator()
-	local allValue = {}
-	while true do
-		local value = iterator()
-		if not value then
-			break
+LinkedList:setSerializableMembers({"allValue"})
+
+function LinkedList:serializeMember(name)
+	if name == "allValue" then
+		local iterator = self:iterator()
+		local allValue = {}
+		while true do
+			local value = iterator()
+			if not value then
+				break
+			end
+
+			table.insert(allValue, value)
 		end
 
-		table.insert(allValue, value)
+		return allValue
 	end
-
-	return allValue
 end
 
-function LinkedList:unserialize(allValue)
-	self:clear()
-	for i, v in ipairs(allValue) do
-		self:add(v)
+function LinkedList:unserializeMember(name, allValue)
+	if name == "allValue" then
+		for i, v in ipairs(allValue) do
+			self:add(v)
+		end
 	end
 end
 

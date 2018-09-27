@@ -174,7 +174,7 @@ function Object:inherit(className)
 	return Class
 end
 
--- Create function that separate class memeber space to avoid derived class member cover base class member.
+-- Create function that separate class member space to avoid derived class member cover base class member.
 -- If want to override function that already create must call this function to create function to ensure behavior is correct.
 -- NOTE: This function must call by class.
 -- NOTE: Only have effect when use in function. In out side of function have not effect.
@@ -214,10 +214,17 @@ function Object:createFunction(originFunc)
 end
 
 function Object:getClass()
-	if self.__type == TABLE_TYPE.Class then
+	local rawType = rawget(self, "__type")
+	if rawType == TABLE_TYPE.Class then
 		return self
-	elseif self.__type == TABLE_TYPE.Object then
+	elseif rawType == TABLE_TYPE.Object then
 		local Class = getmetatable(self).__index
+		if Class.__type == TABLE_TYPE.Class then
+			return Class
+		end
+	elseif self.__type == TABLE_TYPE.Object then
+		local obj = getmetatable(self).__index
+		local Class = getmetatable(obj).__index
 		if Class.__type == TABLE_TYPE.Class then
 			return Class
 		end
@@ -261,6 +268,7 @@ function Object:expectCall(funcName)
 end
 
 -- NOTE: This function must call by object.
+--       func must return by class, because use self will not return current class function.
 function Object:finishCall(func)
 	assert(self.__type == TABLE_TYPE.Object, "Must call by object.")
 	if self.__expectCall and self.__expectCall[func] then
@@ -280,16 +288,96 @@ end
 
 -- Returns table that need to serialize.
 function Object:serialize()
-	error("Must implement serialize by drived class")
+	--error("Must implement serialize by drived class")
+	local t = {
+		__className = self:getClassName(),
+		__members = {}
+	}
+
+	local Class = self:getClass()
+	while Class do
+		local serializableMembers = rawget(Class, "__serializableMembers")
+		local className = Class.__className
+		local classMembers = self.__members[className]
+
+		if serializableMembers and next(serializableMembers) and
+				classMembers and next(classMembers) then
+			t.__members[className] = t.__members[className] or {}
+			local tMembers = t.__members[className]
+			for _, varName in pairs(serializableMembers) do
+				local varValue = Class.serializeMember(classMembers, varName)
+				if varValue then
+					if varValue.__type == TABLE_TYPE.Object then
+						tMembers[varName] = varValue:serialize()
+					else
+						tMembers[varName] = varValue
+					end
+				end
+			end
+		end
+
+		Class = super(Class)
+	end
+
+	return t
 end
 
 -- Unserialize from table that have same structure with serialize return value.
+-- NOTE: Must allow call all class constructor without arguments.
 function Object:unserialize(t)
-	error("Must implement unserialize by drived class")
+	--error("Must implement unserialize by drived class")
+	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+
+	local Class = AllClass[t.__className].Class
+	local obj = Class:new() -- Must allow call constructor without arguments.
+
+	while Class do
+		local className = Class.__className
+		local tMembers = t.__members[className]
+		if tMembers then
+			local classMembers = obj.__members[className]
+			if not classMembers then
+				classMembers = {}
+				setmetatable(classMembers, { __index = obj })
+				obj.__members[className] = classMembers
+			end
+
+			for varName, varValue in pairs(tMembers) do
+				if type(varValue) == "table" and varValue.__className then
+					varValue = Object:unserialize(varValue)
+				end
+				Class.unserializeMember(classMembers, varName, varValue)
+			end
+		end
+
+		Class = super(Class)
+	end
+
+	return obj
+end
+
+function Object:getSerializableMembers()
+	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	return self.__serializableMembers
+end
+
+-- Sets serializable members. Member name can be real name or virtual name.
+-- NOTE: Need process in `serializeMember` and `unserializeMember` when have virtual name.
+function Object:setSerializableMembers(members)
+	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	self.__serializableMembers = members
+end
+
+function Object:serializeMember(name)
+	return self[name]
+end
+
+function Object:unserializeMember(name, value)
+	self[name] = value
 end
 
 --Object:expectCall("constructor") -- An example.
 Object:setToVirtual("constructor")
 Object:setToVirtual("destructor")
-Object:setToVirtual("serialize")
-Object:setToVirtual("unserialize")
+Object:setToVirtual("serializeMember")
+Object:setToVirtual("unserializeMember")

@@ -166,7 +166,6 @@ local function testSerialize()
 
 	AllClass["TestSerializeBase"] = nil
 	AllClass["TestSerializeDerived"] = nil
-	printAny(AllClass)
 end
 
 testSerialize()

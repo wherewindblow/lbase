@@ -17,3 +17,15 @@ end
 function table.print(t)
 	printAny(t)
 end
+
+function string.split(s, p)
+	local rt = {}
+	string.gsub(s, '[^' .. p .. ']+', function(w)
+		table.insert(rt, w)
+	end)
+	return rt
+end
+
+function string.totable(s)
+	return loadstring("return ".. s)()
+end

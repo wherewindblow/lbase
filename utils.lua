@@ -43,6 +43,7 @@ function Utils.update(module)
 	package.loaded[module] = oldModule
 end
 
+-- Serialize table or object to string.
 function Utils.serialize(t)
 	local invalidType = {
 		"thread",
@@ -93,6 +94,7 @@ function Utils.serialize(t)
 	return process(t, rootName)
 end
 
+-- Unserialize string to table or object.
 function Utils.unserialize(str)
 	local chunk = loadstring("return " .. str)
 	local t = chunk()

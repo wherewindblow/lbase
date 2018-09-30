@@ -34,8 +34,8 @@ local assertFmt = assertFmt
 local errorFmt = errorFmt
 local super = super
 
--- New object and will call constructor.
--- NOTE: Cannot override this function. Override constructor to custom.
+-- New object and will call `constructor`.
+-- NOTE: Cannot override this function. Override `constructor` to custom.
 function Object:new(...)
 	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local obj = {
@@ -84,8 +84,8 @@ function Object:constructor(...)
 
 end
 
--- Delete object and will call all destructor.
--- NOTE: Cannot override this function. Override destructor to custom.
+-- Delete object and will call all `destructor`.
+-- NOTE: Cannot override this function. Override `destructor` to custom.
 function Object:delete()
 	assertFmt(self.__type == TABLE_TYPE.Object, "Must call by object.")
 	-- Call all destructor.
@@ -288,7 +288,6 @@ end
 
 -- Returns table that need to serialize.
 function Object:serialize()
-	--error("Must implement serialize by drived class")
 	local t = {
 		__className = self:getClassName(),
 		__members = {}
@@ -322,14 +321,13 @@ function Object:serialize()
 	return t
 end
 
--- Unserialize from table that have same structure with serialize return value.
+-- Unserialize from table that have same structure with `serialize` return value.
 -- NOTE: Must allow call all class constructor without arguments.
 function Object:unserialize(t)
-	--error("Must implement unserialize by drived class")
 	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 
 	local Class = AllClass[t.__className].Class
-	local obj = Class:new() -- Must allow call constructor without arguments.
+	local obj = Class:new() -- Must allow call `constructor` without arguments.
 
 	while Class do
 		local className = Class.__className
@@ -346,7 +344,7 @@ function Object:unserialize(t)
 				if type(varValue) == "table" and varValue.__className then
 					varValue = Object:unserialize(varValue)
 				end
-				-- Cannot use obj pass as self, because Object function are not create by createFunction.
+				-- Cannot use obj pass as self, because Object function are not create by `createFunction`.
 				-- So must pass classMembers by manual.
 				Class.unserializeMember(classMembers, varName, varValue)
 			end
@@ -359,7 +357,6 @@ function Object:unserialize(t)
 end
 
 function Object:getSerializableMembers()
-	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	return self.__serializableMembers
 end
 

@@ -39,10 +39,15 @@ local super = super
 function Object:new(...)
 	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local obj = {
+		__className = self.__className,
 		__type = TABLE_TYPE.Object,
 		__expectCall = {},
 		__members = {},
 	}
+
+	-- It'll reference obj to optimize finding class members.
+	setmetatable(obj.__members, { __mod = "v" })
+	obj.__members[self.__className] = obj
 
 	-- Enable use object to call class function.
 	setmetatable(obj, { __index = self })
@@ -160,7 +165,7 @@ function Object:inherit(className)
 					end
 				end
 
-				v = Class:createFunction(v)
+				v = Class:createFunction(v, funcName)
 			end
 
 			rawset(t, k, v)
@@ -180,14 +185,14 @@ end
 -- NOTE: Only have effect when use in function. In out side of function have not effect.
 --   When in class function to use self, all member create in self is private.
 --   When out of class function to use object, all member create in object is public.
-function Object:createFunction(originFunc)
+function Object:createFunction(originFunc, funcName)
 	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local className = self.__className
 	local function funcWrapper(self, ...)
-		if self.__type == TABLE_TYPE.Object then
+		if self.__className ~= className and self.__type == TABLE_TYPE.Object then
 			local classMembers = self.__members[className]
 			if not classMembers then
-				classMembers = {}
+				classMembers = { __className = className }
 				-- Don't need weak table. It metatable is already is weak table?
 				--local memberMetable = { __index = self }
 				--setmetatable(memberMetable, {__mod = "v"})
@@ -222,7 +227,7 @@ function Object:getClass()
 		if Class.__type == TABLE_TYPE.Class then
 			return Class
 		end
-	elseif self.__type == TABLE_TYPE.Object then
+	elseif self.__type == TABLE_TYPE.Object then -- Get type from metatable.
 		local obj = getmetatable(self).__index
 		local Class = getmetatable(obj).__index
 		if Class.__type == TABLE_TYPE.Class then

@@ -28,11 +28,13 @@ function Utils.update(module)
 				assert(type(v) == type(oldModule[k]), "Cannot change type while update module")
 			end
 
-			if v.__type == TABLE_TYPE.Class then
+			if type(v) == "table" and v.__type == TABLE_TYPE.Class then
 				if oldModule[k] then
 					assert(v.__type == oldModule[k].__type, "Cannot change type while update module")
+					table.clone(v, oldModule[k])
+				else
+					oldModule[k] = v
 				end
-				table.clone(v, oldModule[k])
 			else
 				oldModule[k] = v
 			end

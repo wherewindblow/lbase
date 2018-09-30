@@ -349,7 +349,7 @@ function Object:unserialize(t)
 				if type(varValue) == "table" and varValue.__className then
 					varValue = Object:unserialize(varValue)
 				end
-				-- Cannot use obj pass as self, because Object function are not create by `createFunction`.
+				-- Cannot use obj pass as self, because it may be Object function and not create by `createFunction`.
 				-- So must pass classMembers by manual.
 				Class.unserializeMember(classMembers, varName, varValue)
 			end

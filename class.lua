@@ -340,7 +340,7 @@ function Object:unserialize(t)
 		if tMembers then
 			local classMembers = obj.__members[className]
 			if not classMembers then
-				classMembers = {}
+				classMembers = { __className = className }
 				setmetatable(classMembers, { __index = obj })
 				obj.__members[className] = classMembers
 			end

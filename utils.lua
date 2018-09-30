@@ -19,18 +19,18 @@ function Utils.update(module)
 
 	-- Copy all value into old module to ensure all old reference can be update.
 	if oldModule.__type == TABLE_TYPE.Class then
-		assert(newModule.__type == oldModule.__type, "Cannot change type while update module")
+		assertFmt(newModule.__type == oldModule.__type, "Cannot change type while update module, new type %s, old type %s.", newModule.__type or "nil", oldModule.__type or "nil")
 		table.clone(newModule, oldModule)
 	else
 		-- Is module and module may include class.
 		for k, v in pairs(newModule) do
 			if oldModule[k] then
-				assert(type(v) == type(oldModule[k]), "Cannot change type while update module")
+				assertFmt(type(v) == type(oldModule[k]), "Cannot change type while update module, new type %s, old type %s.", type(v), type(oldModule[k]))
 			end
 
 			if type(v) == "table" and v.__type == TABLE_TYPE.Class then
 				if oldModule[k] then
-					assert(v.__type == oldModule[k].__type, "Cannot change type while update module")
+					assertFmt(v.__type == oldModule[k].__type, "Cannot change type while update module, new type %s, old type %s.", v.__type or "nil", oldModule[k].__type or "nil")
 					table.clone(v, oldModule[k])
 				else
 					oldModule[k] = v

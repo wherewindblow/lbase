@@ -140,26 +140,30 @@ local function testSerialize()
 	local Queue = require("queue")
 	function Base:constructor()
 		self.m_list = LinkedList:new()
+		self.m_queue = Queue:new()
+		self:finishCall(Base.constructor)
+	end
+
+	function Base:addDefaultValue()
 		self.m_list:add(1)
 		self.m_list:add(2)
-		self.m_queue = Queue:new()
 		self.m_queue:push("a")
 		self.m_queue:push("b")
-		self:finishCall(Base.constructor)
 	end
 
 	Base:expectCall("constructor")
 	Base:setSerializableMembers({"m_list", "m_queue"})
 
 	local Derived = Base:inherit("TestSerializeDerived")
-	function Derived:constructor()
+	function Derived:constructor(name)
 		super(Derived).constructor(self)
-		self.m_name = self:getClassName()
+		self.m_name = name
 	end
 
 	Derived:setSerializableMembers({"m_name"})
 
-	local test1 = Derived:new()
+	local test1 = Derived:new("Derived")
+	test1:addDefaultValue()
 	local test1Str = serialize(test1)
 	local test2 = unserialize(test1Str)
 	assert(serialize(test2) == test1Str)

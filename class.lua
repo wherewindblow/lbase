@@ -346,6 +346,8 @@ function Object:unserialize(t)
 				if type(varValue) == "table" and varValue.__className then
 					varValue = Object:unserialize(varValue)
 				end
+				-- Cannot use obj pass as self, because Object function are not create by createFunction.
+				-- So must pass classMembers by manual.
 				Class.unserializeMember(classMembers, varName, varValue)
 			end
 		end
@@ -362,7 +364,8 @@ function Object:getSerializableMembers()
 end
 
 -- Sets serializable members. Member name can be real name or virtual name.
--- NOTE: Need process in `serializeMember` and `unserializeMember` when have virtual name.
+-- NOTE: 1. Need process in `serializeMember` and `unserializeMember` when have virtual name.
+--       2. Need re-generate members when `members` not include all members.
 function Object:setSerializableMembers(members)
 	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	self.__serializableMembers = members

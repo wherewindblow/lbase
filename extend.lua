@@ -6,12 +6,34 @@ function table.size(t)
 	return count
 end
 
+function table.empty(t)
+	return next(t) ~= nil
+end
+
+-- Clone from src to dest. dest can be nil.
 function table.clone(src, dest)
 	dest = dest or {}
 	for k, v in pairs(src) do
 		dest[k] = v
 	end
 	return dest
+end
+
+-- Clone from src to dest. dest can be nil.
+function table.deepclone(src, dest)
+	local function clone(src, dest, deep)
+		assert(deep < 15, "Clone too deep.")
+		dest = dest or {}
+		for k, v in pairs(src) do
+			if type(v) == "table" then
+				dest[k] = clone(v, nil, deep + 1)
+			else
+				dest[k] = v
+			end
+		end
+		return dest
+	end
+	return clone(src, dest, 0)
 end
 
 function table.print(t)

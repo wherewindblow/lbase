@@ -178,4 +178,24 @@ end
 
 testSerialize()
 
+-- Monitor table get set operation.
+function Utils.proxyTable(setCallback, getCallback)
+	local container = {}
+	local metatable = {
+		__newindex = function (t, k, v)
+			if container[k] ~= v then
+				setCallback(t, k, v)
+			end
+			container[k] = v
+		end,
+		__index = function (t, k)
+			getCallback(t, k)
+			return container[k]
+		end
+	}
+	local proxy = {}
+	setmetatable(proxy, metatable)
+	return proxy
+end
+
 return Utils

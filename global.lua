@@ -27,7 +27,11 @@ local function typeTag(any)
 	return tags[type(any)] or type(any)
 end
 
-local printSetting = { maxDeep = 100, index = "    ", defaultRootName = "root" }
+local printSetting = {
+	maxDeep = 100,
+	index = "    ",
+	defaultRootName = "root"
+}
 
 function printAny(...)
 	local printed = {}
@@ -83,7 +87,7 @@ function assertFmt(v, fmt, ...)
 	end
 end
 
-local function compareAssert()
+local function compareAssertFormat()
 	local exp
 	local assertTimes = 1000000
 	local function computeTimeUse(func)
@@ -114,10 +118,33 @@ local function compareAssert()
 	end)
 end
 
+--compareAssertFormat()
+
 --assert timeUse          0.53s
 --assertFmt timeUse       0.05s
 --if assert timeUse       0.01s
 
-
 require("class")
 require("extend")
+
+local function avoidAddGlobalVariable()
+	local newGlobal = {}
+	local metatable = getmetatable(_G) or {}
+
+	metatable.__newindex = function(t, k, v)
+		local info = debug.getinfo(2)
+		printAny(info)
+		print(string.format("WARNING: Add global variable \"%s\", type %s.", k, type(v)), debug.traceback())
+		newGlobal[k] = v
+	end
+
+	metatable.__index = function(t, k)
+		return newGlobal[k]
+	end
+
+	setmetatable(_G, metatable)
+end
+
+-- After this function, all variable in recommend to store in local.
+-- To avoid add too many variable in global.
+avoidAddGlobalVariable()

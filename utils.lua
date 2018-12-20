@@ -46,6 +46,9 @@ function Utils.update(module)
 end
 
 -- Serialize table or object to string.
+-- NOTE: Cannot serialize circle reference table.
+--       Cannot serialize thread and function.
+--       Key cannot be table.
 function Utils.serialize(t)
 	local invalidType = {
 		"thread",
@@ -97,6 +100,7 @@ function Utils.serialize(t)
 end
 
 -- Unserialize string to table or object.
+-- NOTE: `str` is a table string and not include return.
 function Utils.unserialize(str)
 	local chunk = loadstring("return " .. str)
 	local t = chunk()

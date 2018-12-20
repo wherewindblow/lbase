@@ -145,6 +145,6 @@ local function avoidAddGlobalVariable()
 	setmetatable(_G, metatable)
 end
 
--- After this function, all variable in recommend to store in local.
+-- After this function, all variable are recommending to store in local.
 -- To avoid add too many variable in global.
 avoidAddGlobalVariable()

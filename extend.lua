@@ -10,7 +10,7 @@ function table.empty(t)
 	return next(t) ~= nil
 end
 
--- Clone from src to dest. dest can be nil.
+-- Clone from `src` to `dest`. `dest` can be nil.
 function table.clone(src, dest)
 	dest = dest or {}
 	for k, v in pairs(src) do
@@ -19,7 +19,7 @@ function table.clone(src, dest)
 	return dest
 end
 
--- Clone from src to dest. dest can be nil.
+-- Clone from `src` to `dest`. `dest` can be nil.
 function table.deepclone(src, dest)
 	local function clone(src, dest, deep)
 		assert(deep < 15, "Clone too deep.")

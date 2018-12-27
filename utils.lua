@@ -49,19 +49,37 @@ end
 -- NOTE: Cannot serialize circle reference table.
 --       Cannot serialize thread and function.
 --       Key cannot be table.
-function Utils.serialize(t)
+-- `optimize` use to trim space character and it's false on default.
+function Utils.serialize(t, optimize)
 	local invalidType = {
 		"thread",
 		"function"
 	}
 
+	local index = "    "
+
+	optimize = optimize or false
+
 	local processedTable = {}
-	local function process(t, name)
+	local function process(t, name, deep)
 		if t.__type == TABLE_TYPE.Object then
 			t = t:serialize()
 		end
 
-		local str = "{"
+		local outIndex = string.rep(index, deep)
+
+		local str
+		if optimize then
+			str = "{"
+		else
+			if deep == 0 then
+				str = format("%s{\n", outIndex)
+			else
+				str = " {\n"
+			end
+		end
+
+		local inIndex = outIndex .. index
 		for k, v in pairs(t) do
 			local kType = type(k)
 			local vType = type(v)
@@ -81,22 +99,31 @@ function Utils.serialize(t)
 				local vName = format("%s.%s", name, tostring(k))
 				assertFmt(not processedTable[v], "Process %s repeat with %s, cannot serialize circle reference table.", vName, processedTable[v])
 				processedTable[v] = vName
-				vStr = process(v, vName)
+				vStr = process(v, vName, deep + 1)
 			elseif vType == "string" then
 				vStr = format("\"%s\"", tostring(v))
 			else
 				vStr = tostring(v)
 			end
 
-			str = format("%s[%s]=%s,", str, kStr, vStr)
+			if optimize then
+				str = format("%s[%s]=%s,", str, kStr, vStr)
+			else
+				str = format("%s%s[%s]=%s,\n", str, inIndex, kStr, vStr)
+			end
 		end
-		str = str .. "}"
+
+		if optimize then
+			str = str .. "}"
+		else
+			str = format("%s%s}", str, outIndex)
+		end
 		return str
 	end
 
 	local rootName = "root"
 	processedTable[t] = rootName
-	return process(t, rootName)
+	return process(t, rootName, 0)
 end
 
 -- Unserialize string to table or object.

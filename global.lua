@@ -71,6 +71,7 @@ function printAny(...)
 	end
 
 	for _, v in ipairs({...}) do
+		printed = {}
 		printed[v] = printSetting.defaultRootName
 		innerPrint(v, 1, printed[v])
 	end

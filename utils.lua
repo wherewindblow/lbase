@@ -45,6 +45,11 @@ function Utils.update(module)
 	package.loaded[module] = oldModule
 end
 
+local function storeableString(s)
+	s = format("\"%s\"", s)
+	return string.gsub(s, "\n", "\\\n")
+end
+
 -- Serialize table or object to string.
 -- NOTE: Cannot serialize circle reference table.
 --       Cannot serialize thread and function.
@@ -89,7 +94,7 @@ function Utils.serialize(t, optimize)
 
 			local kStr
 			if kType == "string" then
-				kStr = format("\"%s\"", tostring(k))
+				kStr = storeableString(k)
 			else
 				kStr = tostring(k)
 			end
@@ -101,7 +106,7 @@ function Utils.serialize(t, optimize)
 				processedTable[v] = vName
 				vStr = process(v, vName, deep + 1)
 			elseif vType == "string" then
-				vStr = format("\"%s\"", tostring(v))
+				vStr = storeableString(v)
 			else
 				vStr = tostring(v)
 			end
@@ -145,6 +150,8 @@ local function testSerialize()
 	local list1 = LinkedList:new()
 	list1:add("a")
 	list1:add("b")
+	list1:add("a\
+b")
 	local list1Str = serialize(list1)
 	local t = {
 		"a",
@@ -161,7 +168,9 @@ local function testSerialize()
 	local iterator = list2:iterator()
 	assert(iterator() == "a")
 	assert(iterator() == "b")
-	assert(list2:size() == 2)
+	assert(iterator() == "a\
+b")
+	assert(list2:size() == 3)
 	assert(serialize(list2) == list1Str)
 
 	local t2 = unserialize(tStr)

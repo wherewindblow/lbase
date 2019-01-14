@@ -58,10 +58,10 @@ function printAny(...)
 				print(format("%s[ %s ]%s = [ %s ]%s", inIndex, valueString(k), typeTag(k), valueString(v), typeTag(v)))
 			else
 				if not printed[v] then
-					local v_name = format("%s.%s", name, tostring(k))
-					printed[v] = v_name
+					local vName = format("%s.%s", name, tostring(k))
+					printed[v] = vName
 					print(format("%s[ %s ]%s = %s", inIndex, valueString(k), typeTag(k), valueString(v)))
-					innerPrint(v, deep + 1, v_name)
+					innerPrint(v, deep + 1, vName)
 				else
 					print(format("%s[ %s ]%s = [ %s ]r", inIndex, valueString(k), typeTag(k), printed[v]))
 				end

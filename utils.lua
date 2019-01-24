@@ -41,13 +41,21 @@ function Utils.update(module)
 		end
 	end
 
-	-- Make require return old module reference.
+	-- Make sure require return old module reference.
 	package.loaded[module] = oldModule
 end
 
-local function storeableString(s)
-	s = format("\"%s\"", s)
-	return string.gsub(s, "\n", "\\\n")
+local function storeableString(str)
+	local rawTag = "[[raw]]"
+	local rawTagLen = string.len(rawTag)
+
+	local tag = string.sub(str, 1, rawTagLen)
+	if tag == rawTag then
+		return string.sub(str, rawTagLen + 1)
+	else
+		str = format("\"%s\"", str)
+		return string.gsub(str, "\n", "\\\n")
+	end
 end
 
 -- Serialize table or object to string.
@@ -134,7 +142,8 @@ end
 -- Unserialize string to table or object.
 -- NOTE: `str` is a table string and not include return.
 function Utils.unserialize(str)
-	local chunk = loadstring("return " .. str)
+	local chunk, err = loadstring("return " .. str)
+	assert(chunk, err)
 	local t = chunk()
 	if t.__className then
 		return Object:unserialize(t)

@@ -133,8 +133,6 @@ local function avoidAddGlobalVariable()
 	local metatable = getmetatable(_G) or {}
 
 	metatable.__newindex = function(t, k, v)
-		local info = debug.getinfo(2)
-		printAny(info)
 		print(string.format("WARNING: Add global variable \"%s\", type %s.", k, type(v)), debug.traceback())
 		newGlobal[k] = v
 	end

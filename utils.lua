@@ -65,8 +65,8 @@ end
 -- `optimize` use to trim space character and it's false on default.
 function Utils.serialize(t, optimize)
 	local invalidType = {
-		"thread",
-		"function"
+		["thread"] = 1,
+		["function"] = 2,
 	}
 
 	local index = "    "
@@ -88,7 +88,7 @@ function Utils.serialize(t, optimize)
 			if deep == 0 then
 				str = format("%s{\n", outIndex)
 			else
-				str = " {\n"
+				str = "{\n"
 			end
 		end
 
@@ -122,7 +122,7 @@ function Utils.serialize(t, optimize)
 			if optimize then
 				str = format("%s[%s]=%s,", str, kStr, vStr)
 			else
-				str = format("%s%s[%s]=%s,\n", str, inIndex, kStr, vStr)
+				str = format("%s%s[%s] = %s,\n", str, inIndex, kStr, vStr)
 			end
 		end
 

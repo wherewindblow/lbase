@@ -33,6 +33,8 @@ local printSetting = {
 	defaultRootName = "root"
 }
 
+---
+--- Prints any value.
 function printAny(...)
 	local printed = {}
 	local function innerPrint(any, deep, name)
@@ -77,11 +79,16 @@ function printAny(...)
 	end
 end
 
+---
+--- Error with format message.
+--- @param fmt string
 function errorFmt(fmt, ...)
 	error(format(fmt, ...))
 end
 
--- Optimize assert expression.
+---
+--- Assert with format message to optimize string format.
+--- @param fmt string
 function assertFmt(v, fmt, ...)
 	if not v then
 		errorFmt(fmt, ...)

@@ -6,12 +6,14 @@ local tostring = tostring
 local format = string.format
 local assertFmt = assertFmt
 
--- Update module and ensure all old reference can be update.
--- 1. Use require to load module, so any module must return itself at file ending.
--- 2. Module can be class or module, module can include class, but cannot include module.
--- 3. Cannot change value type while update.
--- 4. Update only can add new value or replace old value, but cannot only remove old value.
--- 5. All define in main chunk will be perform again while update, so they will be update.
+---
+--- Update module and ensure all old reference can be update.
+--- 1. Use require to load module, so any module must return itself at file ending.
+--- 2. Module can be class or module, module can include class, but cannot include module.
+--- 3. Cannot change value type while update.
+--- 4. Update only can add new value or replace old value, but cannot only remove old value.
+--- 5. All define in main chunk will be perform again while update, so they will be update.
+--- @param module string
 function Utils.update(module)
 	local oldModule = require(module)
 	package.loaded[module] = nil -- Ensure require can reload module again.
@@ -58,11 +60,14 @@ local function storeableString(str)
 	end
 end
 
--- Serialize table or object to string.
--- NOTE: Cannot serialize circle reference table.
---       Cannot serialize thread and function.
---       Key cannot be table.
--- `optimize` use to trim space character and it's false on default.
+---
+--- Serialize table or object to string.
+--- NOTE: Cannot serialize circle reference table.
+---       Cannot serialize thread and function.
+---       Key cannot be table.
+--- @param t table Serialization target.
+--- @param optimize boolean Uses to trim space character and it's false on default.
+--- @return string
 function Utils.serialize(t, optimize)
 	local invalidType = {
 		["thread"] = 1,
@@ -139,8 +144,11 @@ function Utils.serialize(t, optimize)
 	return process(t, rootName, 0)
 end
 
--- Unserialize string to table or object.
--- NOTE: `str` is a table string and not include return.
+---
+--- Unserialize string to table or object.
+--- NOTE: `str` is a table string and not include return.
+--- @param str string
+--- @return table or object
 function Utils.unserialize(str)
 	local chunk, err = loadstring("return " .. str)
 	assert(chunk, err)
@@ -227,7 +235,11 @@ end
 
 testSerialize()
 
--- Monitor table get set operation.
+---
+--- Monitor table get set operation.
+--- @param setCallback function
+--- @param getCallback function
+--- @return table
 function Utils.proxyTable(setCallback, getCallback)
 	local container = {}
 	local metatable = {

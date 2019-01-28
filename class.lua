@@ -1,21 +1,24 @@
--- Class support c++ like syntax.
--- 1. Distinguish class, object and general table.
--- 2. Support new function to create object of class. And it'll call constructor of class.
--- 3. Support delete function to destroy object. And it'll call destructor of class.
--- 4. Inherit from base class to object oriented.
--- 5. Expect call function to ensure base class constructor to be call by drived class constructor when necessary.
--- 6. Delete function will auto call base class destructor after call drived class destructor.
--- 7. Avoid cover general function with virtual function list. All virtual function must to add virtual attribute.
--- 8. Avoid derived class member cover base class member. NOTE: Only have effect when use in function. In out side of function have not effect.
---    When in class function to use self, all member create in self is private.
---    When out of class function to use object, all member create in object is public.
--- TODO: Support private function.
+---
+--- Class support c++ like syntax.
+--- 1. Distinguish class, object and general table.
+--- 2. Support new function to create object of class. And it'll call constructor of class.
+--- 3. Support delete function to destroy object. And it'll call destructor of class.
+--- 4. Inherit from base class to object oriented.
+--- 5. Expect call function to ensure base class constructor to be call by drived class constructor when necessary.
+--- 6. Delete function will auto call base class destructor after call drived class destructor.
+--- 7. Avoid cover general function with virtual function list. All virtual function must to add virtual attribute.
+--- 8. Avoid derived class member cover base class member. NOTE: Only have effect when use in function. In out side of function have not effect.
+---    When in class function to use self, all member create in self is private.
+---    When out of class function to use object, all member create in object is public.
+--- TODO: Support private function.
 
+--- Table type to distinguish general table and special table.
 TABLE_TYPE = {
 	Class = "Class",
 	Object = "Object",
 }
 
+--- Base class to provide class relative function.
 Object = {
 	__className = "Object",
 	__type = TABLE_TYPE.Class,
@@ -23,10 +26,15 @@ Object = {
 	__virtualFuncList = {},
 }
 
+--- All class set that map class name to class info.
 AllClass = { [Object.__className] = { Class = Object, source = debug.getinfo(1).source } }
 
-function super(self)
-	return self:getBaseClass()
+---
+--- Returns base class.
+--- @param Class class
+--- @return class
+function super(Class)
+	return Class:getBaseClass()
 end
 
 local TABLE_TYPE = TABLE_TYPE
@@ -34,10 +42,13 @@ local assertFmt = assertFmt
 local errorFmt = errorFmt
 local super = super
 
--- New object and will call `constructor`.
--- NOTE: Cannot override this function. Override `constructor` to custom.
+---
+--- New object and will call `constructor`.
+--- NOTE: 1. This function must call by class.
+---       2. Cannot override this function. Override `constructor` to customize.
+--- @return object
 function Object:new(...)
-	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local obj = {
 		__className = self.__className,
 		__type = TABLE_TYPE.Object,
@@ -49,7 +60,7 @@ function Object:new(...)
 	setmetatable(obj.__members, { __mod = "v" })
 	obj.__members[self.__className] = obj
 
-	-- Enable use object to call class function.
+	-- Enable to use object to call class function.
 	setmetatable(obj, { __index = self })
 
 	-- Collect all expect call function of object.
@@ -83,16 +94,19 @@ function Object:new(...)
 	return obj
 end
 
--- Can be override by derived class.
--- NOTE: Must call all expect call function in it.
+---
+--- This function can be override by derived class.
+--- NOTE: Must call all expect call function in it.
 function Object:constructor(...)
 
 end
 
--- Delete object and will call all `destructor`.
--- NOTE: Cannot override this function. Override `destructor` to custom.
+---
+--- Deletes object and will call all `destructor`.
+--- NOTE: 1. This function must call by object.
+---       2. Cannot override this function. Override `destructor` to customize.
 function Object:delete()
-	assertFmt(self.__type == TABLE_TYPE.Object, "Must call by object.")
+	assertFmt(self.__type == TABLE_TYPE.Object, "This function must call by object.")
 	-- Call all destructor.
 	local Class = self:getClass()
 	while Class do
@@ -104,14 +118,19 @@ function Object:delete()
 	end
 end
 
--- Can be override by derived class.
+---
+--- This function can be override by derived class.
 function Object:destructor()
 
 end
 
--- NOTE: This function must call by class.
+---
+--- Inherits from this class.
+--- NOTE: This function must call by class.
+--- @param className string Derived class name.
+--- @return class Derived class
 function Object:inherit(className)
-	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	assertFmt(type(className) == "string", "className must be string.")
 
 	local callerInfo = debug.getinfo(2)
@@ -165,7 +184,7 @@ function Object:inherit(className)
 					end
 				end
 
-				v = Class:createFunction(v, funcName)
+				v = Class:createFunction(v)
 			end
 
 			rawset(t, k, v)
@@ -179,13 +198,13 @@ function Object:inherit(className)
 	return Class
 end
 
--- Create function that separate class member space to avoid derived class member cover base class member.
--- If want to override function that already create must call this function to create function to ensure behavior is correct.
--- NOTE: This function must call by class.
--- NOTE: Only have effect when use in function. In out side of function have not effect.
---   When in class function to use self, all member create in self is private.
---   When out of class function to use object, all member create in object is public.
-function Object:createFunction(originFunc, funcName)
+---
+--- Creates function that separate class member space to avoid derived class member cover base class member.
+--- If want to override function that already create must call this function to create function to ensure behavior is correct.
+--- NOTE: This function must call by class.
+--- @param originFunc function
+--- @return function That can be assign to class.
+function Object:createFunction(originFunc)
 	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
 	local className = self.__className
 	local function funcWrapper(self, ...)
@@ -218,6 +237,9 @@ function Object:createFunction(originFunc, funcName)
 	return funcWrapper
 end
 
+---
+--- Gets class.
+--- @return class
 function Object:getClass()
 	local rawType = rawget(self, "__type")
 	if rawType == TABLE_TYPE.Class then
@@ -234,19 +256,25 @@ function Object:getClass()
 			return Class
 		end
 	else
-		errorFmt("Unknow type %s.", self.__type or "")
+		errorFmt("Unknown type %s.", self.__type or "")
 	end
 end
 
+---
+--- Gets class name.
+--- @return string
 function Object:getClassName()
 	local Class = self:getClass()
 	return Class.__className
 end
 
--- NOTE: This function must call by class.
--- In fact, this function can be call by object, but will make some mistake when use to call base class constructor.
+---
+--- Gets base class.
+--- NOTE: This function must call by class.
+--- In fact, this function can be call by object, but will make some mistake when use to call base class constructor.
+--- @return class
 function Object:getBaseClass()
-	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local metatable = getmetatable(self)
 	if metatable then
 		local BaseClass = metatable.__index
@@ -260,22 +288,31 @@ function Object:getBaseClass()
 	--end
 end
 
+---
+--- Gets type of class or object.
+--- @return string
 function Object:getType()
 	return self.__type
 end
 
--- NOTE: This function must call by class.
+---
+--- Expects function to be call in `constructor`.
+--- NOTE: This function must call by class.
+--- @param funcName string
 function Object:expectCall(funcName)
-	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local func = rawget(self, funcName)
 	assertFmt(func, "Not exist function %s:%s", self.__className, funcName)
 	self.__expectCall[funcName] = true
 end
 
--- NOTE: This function must call by object.
---       func must return by class, because use self will not return current class function.
+---
+--- Finish call function.
+--- NOTE: 1. This function must call by object.
+---       2. `func` must get from class, because use self will not return current class function when at base class.
+--- @param func function
 function Object:finishCall(func)
-	assert(self.__type == TABLE_TYPE.Object, "Must call by object.")
+	assert(self.__type == TABLE_TYPE.Object, "This function must call by object.")
 	if self.__expectCall and self.__expectCall[func] then
 		-- Object __expectCall is difference from Class.
 		local callInfo = self.__expectCall[func]
@@ -283,15 +320,20 @@ function Object:finishCall(func)
 	end
 end
 
--- NOTE: This function must call by class.
+---
+--- Sets function to virtual.
+--- NOTE: This function must call by class.
+--- @param funcName string
 function Object:setToVirtual(funcName)
-	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local func = rawget(self, funcName)
 	assertFmt(func, "Not exist function %s:%s", self.__className, funcName)
 	self.__virtualFuncList[funcName] = true
 end
 
--- Returns table that need to serialize.
+---
+--- Returns table that need to serialize.
+--- @return table
 function Object:serialize()
 	local t = {
 		__className = self:getClassName(),
@@ -326,10 +368,14 @@ function Object:serialize()
 	return t
 end
 
--- Unserialize from table that have same structure with `serialize` return value.
--- NOTE: Must allow call all class constructor without arguments.
+---
+--- Unserializes from table that have same structure with `serialize` return value.
+--- NOTE: 1. This function must call by class.
+---       2. Must allow call all class constructor without arguments.
+--- @param t table
+--- @return object
 function Object:unserialize(t)
-	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 
 	local Class = AllClass[t.__className].Class
 	local obj = Class:new() -- Must allow call `constructor` without arguments.
@@ -361,22 +407,35 @@ function Object:unserialize(t)
 	return obj
 end
 
+---
+--- Gets serializable members.
+--- @return table
 function Object:getSerializableMembers()
 	return self.__serializableMembers
 end
 
--- Sets serializable members. Member name can be real name or virtual name.
--- NOTE: 1. Need process in `serializeMember` and `unserializeMember` when have virtual name.
---       2. Need re-generate members when `members` not include all members.
+---
+--- Sets serializable members. Member name can be real name or virtual name.
+--- NOTE: 1. This function must call by class.
+---       2. Needs process in `serializeMember` and `unserializeMember` when have virtual name.
+---       3. Needs re-generate members when `members` not include all members.
+--- @param members table List of member name.
 function Object:setSerializableMembers(members)
-	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	self.__serializableMembers = members
 end
 
+---
+--- Returns serializable value of memeber name.
+--- @param name string
 function Object:serializeMember(name)
 	return self[name]
 end
 
+---
+--- Unserializes member.
+--- @param name string
+--- @param value any
 function Object:unserializeMember(name, value)
 	self[name] = value
 end

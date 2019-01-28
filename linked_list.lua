@@ -1,3 +1,4 @@
+--- @class LinkedList
 local LinkedList = Object:inherit("LinkedList")
 
 function LinkedList:constructor()
@@ -8,10 +9,16 @@ function LinkedList:constructor()
 	self.m_size = 0
 end
 
+---
+--- Adds value to tail.
+--- @param value any
 function LinkedList:add(value)
 	self:pushBack(value)
 end
 
+---
+--- Pushs value to head.
+--- @param value any
 function LinkedList:pushFront(value)
 	local newNode = { value = value, previous = self.m_head, next = self.m_head.next }
 	self.m_head.next.previous = newNode
@@ -19,6 +26,9 @@ function LinkedList:pushFront(value)
 	self.m_size = self.m_size + 1
 end
 
+---
+--- Pushs value to tail.
+--- @param value any
 function LinkedList:pushBack(value)
 	local newNode = { value = value, previous = self.m_tail.previous, next = self.m_tail }
 	self.m_tail.previous.next = newNode
@@ -26,6 +36,9 @@ function LinkedList:pushBack(value)
 	self.m_size = self.m_size + 1
 end
 
+---
+--- Removes value.
+--- @param value any
 function LinkedList:remove(value)
 	assert(value, "value cannot be nil")
 	local node = self.m_head
@@ -40,6 +53,8 @@ function LinkedList:remove(value)
 	end
 end
 
+---
+--- Removes value from head.
 function LinkedList:removeFront()
 	if self:empty() then
 		return
@@ -51,6 +66,8 @@ function LinkedList:removeFront()
 	self.m_size = self.m_size - 1
 end
 
+---
+--- Removes value from tail.
 function LinkedList:removeBack()
 	if self:empty() then
 		return
@@ -62,6 +79,9 @@ function LinkedList:removeBack()
 	self.m_size = self.m_size - 1
 end
 
+---
+--- Removes value with target check.
+--- @param isTarget function fun(value) To check value is target.
 function LinkedList:removeIf(isTarget)
 	local node = self.m_head
 	while node do
@@ -74,10 +94,15 @@ function LinkedList:removeIf(isTarget)
 	end
 end
 
+---
+--- Returns size of list.
 function LinkedList:size()
 	return self.m_size
 end
 
+---
+--- Returns iterator that can for each value.
+--- @return function
 function LinkedList:iterator()
 	local next = self.m_head.next
 	local function nextValue()
@@ -89,10 +114,14 @@ function LinkedList:iterator()
 	return nextValue
 end
 
+---
+--- Checks list is empty.
 function LinkedList:empty()
 	return self.m_size == 0
 end
 
+---
+--- Clears list.
 function LinkedList:clear()
 	self:constructor()
 end

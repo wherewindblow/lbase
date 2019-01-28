@@ -1,23 +1,36 @@
 local LinkedList = require("linked_list")
+
+--- @class Queue
 local Queue = Object:inherit("Queue")
 
 function Queue:constructor()
 	self.m_list = LinkedList:new()
 end
 
+---
+--- Pushs value into tail.
+--- @param value any
 function Queue:push(value)
 	self.m_list:add(value)
 end
 
+---
+--- Returns front value.
+--- @return any
 function Queue:front()
 	local iterator = self.m_list:iterator()
 	return iterator()
 end
 
+---
+--- Pops value from head.
 function Queue:pop()
 	self.m_list:removeFront()
 end
 
+---
+--- Returns iterator to for each value.
+--- @return function
 function Queue:iterator()
 	return self.m_list:iterator()
 end
@@ -26,10 +39,16 @@ function Queue:debug()
 	self.m_list:debug()
 end
 
+---
+--- Returns size of queue.
+--- @return number
 function Queue:size()
 	return self.m_list:size()
 end
 
+---
+--- Checks is empty.
+--- @return boolean
 function Queue:empty()
 	return self.m_list:empty()
 end

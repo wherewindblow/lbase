@@ -87,17 +87,19 @@ end
 
 ---
 --- Error with format message.
---- @param fmt string
+--- @param fmt string Support default fmt.
 function errorFmt(fmt, ...)
-	error(format(fmt, ...))
+	local msg = fmt and format(fmt, ...)
+	error(msg)
 end
 
 ---
 --- Assert with format message to optimize string format.
---- @param fmt string
+--- @param fmt string Support default fmt.
 function assertFmt(v, fmt, ...)
 	if not v then
-		assert(v, format(fmt, ...))
+		local msg = fmt and format(fmt, ...)
+		assert(v, msg)
 	end
 end
 

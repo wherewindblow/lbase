@@ -90,9 +90,31 @@ function string.totable(s)
 	return loadstring("return ".. s)()
 end
 
-local function addLocalVariable(str, level)
+---
+--- Checks is starts with pattern.
+--- @param s string
+--- @param pattern string
+--- @return boolean
+function string.startswith(s, pattern)
+	local startPos, endPos = string.find(s, pattern)
+	return startPos == 1
+end
+
+---
+--- Checks is ends with pattern.
+--- @param s string
+--- @param pattern string
+--- @return boolean
+function string.endswith(s, pattern)
+	local startPos, endPos = string.find(s, pattern)
+	return endPos == string.len(s)
+end
+
+local function localVariables(level)
 	level = level + 1 -- Outside level.
 	local localNum = 1
+	local str
+
 	while true do
 		local name, value = debug.getlocal(level, localNum)
 		if not name then
@@ -100,7 +122,11 @@ local function addLocalVariable(str, level)
 		end
 
 		-- Add variable name.
-		str = format("%s\n\t\t'%s'", str, name)
+		if not str then
+			str = format("\n\t\t'%s'", name)
+		else
+			str = format("%s\n\t\t'%s'", str, name)
+		end
 
 		-- Add variable value.
 		local valueType = type(value)
@@ -119,13 +145,16 @@ end
 
 ---
 --- Returns full traceback message that include all local variables.
---- @param level number
+--- @param level number Default is 1.
+--- @param showInternal boolean Default is nil.
 --- @return string
-function debug.fulltraceback(level)
+function debug.fulltraceback(level, showInternal)
 	level = level or 1
 	level = level + 1 -- Outside level must add one.
 
-	local str = "stack traceback:"
+	local traceList = { "stack traceback:" }
+	local startHideWrapper = false
+	local showLevel = level
 
 	while true do
 		local funcInfo = debug.getinfo(level)
@@ -134,30 +163,58 @@ function debug.fulltraceback(level)
 		end
 
 		-- Add source file.
-		str = format("%s\n\t(%d) %s:", str, level - 1, funcInfo.short_src)
+		local traceInfo = format("\n\t(%d) %s:", showLevel - 1, funcInfo.short_src)
 
 		-- Add source line.
 		if funcInfo.currentline > 0 then
-			str = format("%s%d:", str, funcInfo.currentline)
+			traceInfo = format("%s%d:", traceInfo, funcInfo.currentline)
 		end
 
 		-- Add function name.
+		local isClassFuncWrapper
 		if stringlen(funcInfo.namewhat) ~= 0 then
-			str = format("%s in function '%s'", str, funcInfo.name or "?")
+			if not showInternal then
+				-- Hide class function wrapper.
+				if startHideWrapper then
+					if string.endswith(funcInfo.short_src, "class.lua") then -- Object.createFunction is define in "class.lua".
+						isClassFuncWrapper = true
+						local originTrackIndex = #traceList - 1 -- Last is local variables and previous of last is general trace.
+						local originTrack = traceList[originTrackIndex]
+						local newstr = format("in function '%s'", funcInfo.name)
+						traceList[originTrackIndex] = string.gsub(originTrack, "in function 'originFunc'", newstr)
+					end
+					startHideWrapper = false
+				end
+
+				if funcInfo.name == "originFunc" then -- "originFunc" is parameter name of Object.createFunction.
+					startHideWrapper = true -- Next level maybe class function wrapper.
+				end
+			end
+
+			traceInfo = format("%s in function '%s'", traceInfo, funcInfo.name or "?")
 		else
 			if funcInfo.what == "main" then
-				str = format("%s in main chunk", str)
+				traceInfo = format("%s in main chunk", traceInfo)
 			elseif funcInfo.what == "C" or funcInfo.what == "tail" then -- C function or tail call.
-				str = format("%s ?", str)
+				traceInfo = format("%s ?", traceInfo)
 			else
-				str = format("%s in function <%s:%d>", str, funcInfo.short_src, funcInfo.linedefined)
+				traceInfo = format("%s in function <%s:%d>", traceInfo, funcInfo.short_src, funcInfo.linedefined)
 			end
 		end
 
-		-- Add all local variable.
-		str = addLocalVariable(str, level)
+		if not isClassFuncWrapper then
+			-- Add general trace info.
+			table.insert(traceList, traceInfo)
 
+			-- Add all local variables.
+			table.insert(traceList, localVariables(level))
+
+			showLevel = showLevel + 1
+		end
+
+		isClassFuncWrapper = nil
 		level = level + 1
 	end
-	return str
+
+	return table.concat(traceList)
 end

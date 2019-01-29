@@ -1,17 +1,23 @@
-
+-- Optimize.
+local type = type
+local tostring = tostring
+local print = print
+local error = error
+local assert = assert
 local format = string.format
+local stringsub = string.sub
 
 local function valueString(any)
 	local str
-	local type = type(any)
-	if type == "string" then
+	local vType = type(any)
+	if vType == "string" then
 		str = format("\"%s\"", any)
-	elseif type == "function" then
-		str =  string.sub(tostring(any), 11)
-	elseif type == "table" then
-		str =  string.sub(tostring(any), 8)
+	elseif vType == "function" then
+		str = stringsub(tostring(any), 11)
+	elseif vType == "table" then
+		str = stringsub(tostring(any), 8)
 	else
-		str =  tostring(any)
+		str = tostring(any)
 	end
 	return str
 end
@@ -91,7 +97,7 @@ end
 --- @param fmt string
 function assertFmt(v, fmt, ...)
 	if not v then
-		errorFmt(fmt, ...)
+		assert(v, format(fmt, ...))
 	end
 end
 
@@ -132,8 +138,8 @@ end
 --assertFmt timeUse       0.05s
 --if assert timeUse       0.01s
 
-require("class")
 require("extend")
+require("class")
 
 local function avoidAddGlobalVariable()
 	local newGlobal = {}

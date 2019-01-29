@@ -18,6 +18,7 @@ TABLE_TYPE = {
 	Object = "Object",
 }
 
+--- @class Object
 --- Base class to provide class relative function.
 Object = {
 	__className = "Object",
@@ -37,6 +38,14 @@ function super(Class)
 	return Class:getBaseClass()
 end
 
+-- Optimize.
+local pairs = pairs
+local type = type
+local next = next
+local rawget = rawget
+local rawset = rawset
+local getmetatable = getmetatable
+local setmetatable = setmetatable
 local TABLE_TYPE = TABLE_TYPE
 local assertFmt = assertFmt
 local errorFmt = errorFmt
@@ -312,7 +321,7 @@ end
 ---       2. `func` must get from class, because use self will not return current class function when at base class.
 --- @param func function
 function Object:finishCall(func)
-	assert(self.__type == TABLE_TYPE.Object, "This function must call by object.")
+	assertFmt(self.__type == TABLE_TYPE.Object, "This function must call by object.")
 	if self.__expectCall and self.__expectCall[func] then
 		-- Object __expectCall is difference from Class.
 		local callInfo = self.__expectCall[func]

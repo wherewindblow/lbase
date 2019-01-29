@@ -5,7 +5,8 @@ local next = next
 local tostring = tostring
 local assert = assert
 local format = string.format
-local len = string.len
+local stringlen = string.len
+local tableinsert = table.insert
 
 ---
 --- Returns size of table.
@@ -76,7 +77,7 @@ end
 function string.split(s, pattern)
 	local result = {}
 	string.gsub(s, '[^' .. pattern .. ']+', function(w)
-		table.insert(result, w)
+		tableinsert(result, w)
 	end)
 	return result
 end
@@ -139,7 +140,7 @@ function debug.fulltraceback(level)
 		end
 
 		-- Add function name.
-		if len(funcInfo.namewhat) ~= 0 then
+		if stringlen(funcInfo.namewhat) ~= 0 then
 			str = format("%s in function '%s'", str, funcInfo.name or "?")
 		else
 			if funcInfo.what == "main" then

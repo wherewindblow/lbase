@@ -1,10 +1,15 @@
-local Utils = {}
-
 -- Optimize.
+local pairs = pairs
 local type = type
 local tostring = tostring
 local format = string.format
+local stringlen = string.len
+local stringsub = string.sub
+local stringgsub = string.gsub
+local TABLE_TYPE = TABLE_TYPE
 local assertFmt = assertFmt
+
+local Utils = {}
 
 ---
 --- Update module and ensure all old reference can be update.
@@ -49,14 +54,14 @@ end
 
 local function storeableString(str)
 	local rawTag = "[[raw]]"
-	local rawTagLen = string.len(rawTag)
+	local rawTagLen = stringlen(rawTag)
 
-	local tag = string.sub(str, 1, rawTagLen)
+	local tag = stringsub(str, 1, rawTagLen)
 	if tag == rawTag then
-		return string.sub(str, rawTagLen + 1)
+		return stringsub(str, rawTagLen + 1)
 	else
 		str = format("\"%s\"", str)
-		return string.gsub(str, "\n", "\\\n")
+		return stringgsub(str, "\n", "\\\n")
 	end
 end
 
@@ -183,11 +188,11 @@ b")
 
 	local list2 = unserialize(list1Str)
 	local iterator = list2:iterator()
+	assert(list2:size() == 3)
 	assert(iterator() == "a")
 	assert(iterator() == "b")
 	assert(iterator() == "a\
 b")
-	assert(list2:size() == 3)
 	assert(serialize(list2) == list1Str)
 
 	local t2 = unserialize(tStr)

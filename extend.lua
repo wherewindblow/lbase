@@ -122,7 +122,9 @@ end
 --- @param level number
 --- @return string
 function debug.fulltraceback(level)
-	level = level or 2 -- Outside level is 2.
+	level = level or 1
+	level = level + 1 -- Outside level must add one.
+
 	local str = "stack traceback:"
 
 	while true do

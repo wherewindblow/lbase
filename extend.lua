@@ -24,7 +24,7 @@ end
 --- @param t table
 --- @return boolean
 function table.empty(t)
-	return next(t) ~= nil
+	return next(t) == nil
 end
 
 ---

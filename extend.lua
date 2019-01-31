@@ -134,6 +134,8 @@ local function localVariables(level)
 			str = format("%s: %s", str, tostring(value))
 		elseif valueType == "string" then
 			str = format("%s: '%s'", str, tostring(value))
+		elseif valueType == "table" and type(value.getSnapshot) == "function" then
+			str = format("%s: %s: %s", str, tostring(value), value:getSnapshot() or "unknown")
 		else
 			str = format("%s: %s", str, tostring(value))
 		end

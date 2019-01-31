@@ -162,11 +162,12 @@ function Object:inherit(className)
 		-- Enable to call base class function.
 		__index = self,
 		__newindex = function(t, k, v)
+			-- Creates new function.
 			if type(v) == "function" then
 				local funcName = k
-				-- Check function can be override.
+				-- Checks function can be override.
 				if t[funcName] then
-					-- Check is virtual function.
+					-- Checks is virtual function.
 					local isVirtualFunc
 					local CurClass = Class
 					while CurClass do
@@ -216,7 +217,7 @@ end
 --- @param originFunc function
 --- @return function That can be assign to class.
 function Object:createFunction(originFunc)
-	assertFmt(self.__type == TABLE_TYPE.Class, "Must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local className = self.__className
 	local function funcWrapper(self, ...)
 		if self.__className ~= className and self.__type == TABLE_TYPE.Object then
@@ -451,8 +452,16 @@ function Object:unserializeMember(name, value)
 	self[name] = value
 end
 
+---
+--- Gets snapshot info that uses in error handler.
+--- @return string
+function Object:getSnapshot()
+	return "className=" .. self:getClassName()
+end
+
 --Object:expectCall("constructor") -- An example.
 Object:setToVirtual("constructor")
 Object:setToVirtual("destructor")
 Object:setToVirtual("serializeMember")
 Object:setToVirtual("unserializeMember")
+Object:setToVirtual("getSnapshot")

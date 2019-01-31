@@ -145,78 +145,94 @@ local function localVariables(level)
 	return str
 end
 
+local function fulltraceback(level, showInternal)
+    level = level or 1
+	-- Outside level must add some level.
+	-- 1. fulltraceback
+	-- 2. pcall
+	-- 3. debug.fulltraceback
+    level = level + 3
+
+    local traceList = { "stack traceback:" }
+    local startHideWrapper = false
+    local showLevel = 1
+
+    while true do
+        local funcInfo = debug.getinfo(level)
+        if not funcInfo then
+            break
+        end
+
+        -- Add source file.
+        local traceInfo = format("\n\t(%d) %s:", showLevel, funcInfo.short_src)
+
+        -- Add source line.
+        if funcInfo.currentline > 0 then
+            traceInfo = format("%s%d:", traceInfo, funcInfo.currentline)
+        end
+
+        -- Add function name.
+        local isClassFuncWrapper
+        if stringlen(funcInfo.namewhat) ~= 0 then
+            if not showInternal then
+                -- Hide class function wrapper.
+                if startHideWrapper then
+                    if string.endswith(funcInfo.short_src, "class.lua") then
+                        -- Object.createFunction is define in "class.lua".
+                        isClassFuncWrapper = true
+                        local originTrackIndex = #traceList - 1 -- Last is local variables and previous of last is general trace.
+                        local originTrack = traceList[originTrackIndex]
+                        local newstr = format("in function '%s'", funcInfo.name)
+                        traceList[originTrackIndex] = string.gsub(originTrack, "in function 'originFunc'", newstr)
+                    end
+                    startHideWrapper = false
+                end
+
+                if funcInfo.name == "originFunc" then
+                    -- "originFunc" is parameter name of Object.createFunction.
+                    startHideWrapper = true -- Next level maybe class function wrapper.
+                end
+            end
+
+            traceInfo = format("%s in function '%s'", traceInfo, funcInfo.name or "?")
+        else
+            if funcInfo.what == "main" then
+                traceInfo = format("%s in main chunk", traceInfo)
+            elseif funcInfo.what == "C" or funcInfo.what == "tail" then
+                -- C function or tail call.
+                traceInfo = format("%s ?", traceInfo)
+            else
+                traceInfo = format("%s in function <%s:%d>", traceInfo, funcInfo.short_src, funcInfo.linedefined)
+            end
+        end
+
+        if not isClassFuncWrapper then
+            -- Add general trace info.
+            tableinsert(traceList, traceInfo)
+
+            -- Add all local variables.
+            tableinsert(traceList, localVariables(level))
+
+            showLevel = showLevel + 1
+        end
+
+        isClassFuncWrapper = nil
+        level = level + 1
+    end
+
+    return table.concat(traceList)
+end
+
 ---
 --- Returns full traceback message that include all local variables.
 --- @param level number Default is 1.
 --- @param showInternal boolean Default is false.
 --- @return string
 function debug.fulltraceback(level, showInternal)
-	level = level or 1
-	level = level + 1 -- Outside level must add one.
+	local ok, msg = pcall(fulltraceback, level, showInternal)
+    if ok then
+        return msg
+    end
 
-	local traceList = { "stack traceback:" }
-	local startHideWrapper = false
-	local showLevel = level
-
-	while true do
-		local funcInfo = debug.getinfo(level)
-		if not funcInfo then
-			break
-		end
-
-		-- Add source file.
-		local traceInfo = format("\n\t(%d) %s:", showLevel - 1, funcInfo.short_src)
-
-		-- Add source line.
-		if funcInfo.currentline > 0 then
-			traceInfo = format("%s%d:", traceInfo, funcInfo.currentline)
-		end
-
-		-- Add function name.
-		local isClassFuncWrapper
-		if stringlen(funcInfo.namewhat) ~= 0 then
-			if not showInternal then
-				-- Hide class function wrapper.
-				if startHideWrapper then
-					if string.endswith(funcInfo.short_src, "class.lua") then -- Object.createFunction is define in "class.lua".
-						isClassFuncWrapper = true
-						local originTrackIndex = #traceList - 1 -- Last is local variables and previous of last is general trace.
-						local originTrack = traceList[originTrackIndex]
-						local newstr = format("in function '%s'", funcInfo.name)
-						traceList[originTrackIndex] = string.gsub(originTrack, "in function 'originFunc'", newstr)
-					end
-					startHideWrapper = false
-				end
-
-				if funcInfo.name == "originFunc" then -- "originFunc" is parameter name of Object.createFunction.
-					startHideWrapper = true -- Next level maybe class function wrapper.
-				end
-			end
-
-			traceInfo = format("%s in function '%s'", traceInfo, funcInfo.name or "?")
-		else
-			if funcInfo.what == "main" then
-				traceInfo = format("%s in main chunk", traceInfo)
-			elseif funcInfo.what == "C" or funcInfo.what == "tail" then -- C function or tail call.
-				traceInfo = format("%s ?", traceInfo)
-			else
-				traceInfo = format("%s in function <%s:%d>", traceInfo, funcInfo.short_src, funcInfo.linedefined)
-			end
-		end
-
-		if not isClassFuncWrapper then
-			-- Add general trace info.
-			tableinsert(traceList, traceInfo)
-
-			-- Add all local variables.
-			tableinsert(traceList, localVariables(level))
-
-			showLevel = showLevel + 1
-		end
-
-		isClassFuncWrapper = nil
-		level = level + 1
-	end
-
-	return table.concat(traceList)
+    return "debug.fulltraceback internal error: " .. msg
 end

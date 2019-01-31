@@ -1,8 +1,10 @@
 local LinkedList = require("linked_list")
 
---- @class Queue
+--- @class Queue: Object
 local Queue = Object:inherit("Queue")
 
+---
+--- Constructs queue object.
 function Queue:constructor()
 	self.m_list = LinkedList:new()
 end

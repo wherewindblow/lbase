@@ -31,7 +31,7 @@ end
 ---
 --- Clones from `src` to `dest`.
 --- @param src table
---- @param dest table Default is nil.
+--- @param dest table Default is empty table.
 --- @return table Destination table.
 function table.clone(src, dest)
 	dest = dest or {}
@@ -44,7 +44,7 @@ end
 ---
 --- Clones from `src` to `dest`.
 --- @param src table
---- @param dest table Default is nil.
+--- @param dest table Default is empty table.
 --- @return table Destination table.
 function table.deepclone(src, dest)
 	local function clone(src, dest, deep)
@@ -146,7 +146,7 @@ end
 ---
 --- Returns full traceback message that include all local variables.
 --- @param level number Default is 1.
---- @param showInternal boolean Default is nil.
+--- @param showInternal boolean Default is false.
 --- @return string
 function debug.fulltraceback(level, showInternal)
 	level = level or 1
@@ -204,10 +204,10 @@ function debug.fulltraceback(level, showInternal)
 
 		if not isClassFuncWrapper then
 			-- Add general trace info.
-			table.insert(traceList, traceInfo)
+			tableinsert(traceList, traceInfo)
 
 			-- Add all local variables.
-			table.insert(traceList, localVariables(level))
+			tableinsert(traceList, localVariables(level))
 
 			showLevel = showLevel + 1
 		end

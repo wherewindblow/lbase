@@ -71,7 +71,7 @@ end
 ---       Cannot serialize thread and function.
 ---       Key cannot be table.
 --- @param t table Serialization target.
---- @param optimize boolean Uses to trim space character and it's false on default.
+--- @param optimize boolean Default is false. Uses to trim space character.
 --- @return string
 function Utils.serialize(t, optimize)
 	local invalidType = {
@@ -169,6 +169,7 @@ local function testSerialize()
 	local unserialize = Utils.unserialize
 
 	local LinkedList = require("linked_list")
+	LinkedList.name = Utils
 	local list1 = LinkedList:new()
 	list1:add("a")
 	list1:add("b")

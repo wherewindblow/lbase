@@ -1,6 +1,8 @@
---- @class LinkedList
+--- @class LinkedList : Object
 local LinkedList = Object:inherit("LinkedList")
 
+---
+--- Constructs list object.
 function LinkedList:constructor()
 	self.m_head = {}
 	self.m_tail = {}

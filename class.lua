@@ -28,12 +28,14 @@ Object = {
 }
 
 --- All class set that map class name to class info.
-AllClass = { [Object.__className] = { Class = Object, source = debug.getinfo(1).source } }
+AllClass = {
+	[Object.__className] = { Class = Object, source = debug.getinfo(1).source }
+}
 
 ---
 --- Returns base class.
---- @param Class class
---- @return class
+--- @param Class table
+--- @return table
 function super(Class)
 	return Class:getBaseClass()
 end
@@ -55,7 +57,7 @@ local super = super
 --- New object and will call `constructor`.
 --- NOTE: 1. This function must call by class.
 ---       2. Cannot override this function. Override `constructor` to customize.
---- @return object
+--- @return table Object of specific class.
 function Object:new(...)
 	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local obj = {
@@ -137,7 +139,7 @@ end
 --- Inherits from this class.
 --- NOTE: This function must call by class.
 --- @param className string Derived class name.
---- @return class Derived class
+--- @return table Derived class
 function Object:inherit(className)
 	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	assertFmt(type(className) == "string", "className must be string.")
@@ -248,7 +250,7 @@ end
 
 ---
 --- Gets class.
---- @return class
+--- @return table
 function Object:getClass()
 	local rawType = rawget(self, "__type")
 	if rawType == TABLE_TYPE.Class then
@@ -281,7 +283,7 @@ end
 --- Gets base class.
 --- NOTE: This function must call by class.
 --- In fact, this function can be call by object, but will make some mistake when use to call base class constructor.
---- @return class
+--- @return table Base class or nil.
 function Object:getBaseClass()
 	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local metatable = getmetatable(self)
@@ -382,7 +384,7 @@ end
 --- NOTE: 1. This function must call by class.
 ---       2. Must allow call all class constructor without arguments.
 --- @param t table
---- @return object
+--- @return table Object of specific class.
 function Object:unserialize(t)
 	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 

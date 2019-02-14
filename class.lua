@@ -61,15 +61,10 @@ local super = super
 function Object:new(...)
 	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local obj = {
-		__className = self.__className,
 		__type = TABLE_TYPE.Object,
 		__expectCall = {},
 		__members = {},
 	}
-
-	-- It'll reference obj to optimize finding class members.
-	setmetatable(obj.__members, { __mod = "v" })
-	obj.__members[self.__className] = obj
 
 	-- Enable to use object to call class function.
 	setmetatable(obj, { __index = self })
@@ -220,10 +215,13 @@ function Object:createFunction(originFunc)
 	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local className = self.__className
 	local function funcWrapper(self, ...)
-		if self.__className ~= className and self.__type == TABLE_TYPE.Object then
+		if self.__type == TABLE_TYPE.Object then
 			local classMembers = self.__members[className]
 			if not classMembers then
-				classMembers = { __className = className }
+				classMembers = {
+					__type = TABLE_TYPE.Object, -- Optimize get type operation.
+				}
+
 				-- Don't need weak table. It metatable is already is weak table?
 				--local memberMetable = { __index = self }
 				--setmetatable(memberMetable, {__mod = "v"})

@@ -17,7 +17,8 @@ local Utils = {}
 --- 2. Module can be class or module, module can include class, but cannot include module.
 --- 3. Cannot change value type while update.
 --- 4. Update only can add new value or replace old value, but cannot only remove old value.
---- 5. All define in main chunk will be perform again while update, so they will be update.
+--- 5. Only code(function or class) that inside module can be update, data will not change.
+--- 6. All define in main chunk will be perform again while update, so they will be update.
 --- @param module string
 function Utils.update(module)
 	local oldModule = require(module)
@@ -31,19 +32,35 @@ function Utils.update(module)
 	else
 		-- Is module and module may include class.
 		for k, v in pairs(newModule) do
-			if oldModule[k] then
-				assertFmt(type(v) == type(oldModule[k]), "Cannot change type while update module, new type %s, old type %s.", type(v), type(oldModule[k]))
+			local oldV = oldModule[k]
+			local vType = type(v)
+			if oldV then
+				assertFmt(vType == type(oldV), "Cannot change type while update module, new type %s, old type %s.", vType, type(oldV))
 			end
 
-			if type(v) == "table" and v.__type == TABLE_TYPE.Class then
-				if oldModule[k] then
-					assertFmt(v.__type == oldModule[k].__type, "Cannot change type while update module, new type %s, old type %s.", v.__type or "nil", oldModule[k].__type or "nil")
-					table.clone(v, oldModule[k])
+			if vType == "table" then
+				if v.__type == TABLE_TYPE.Class then
+					if oldV then
+						assertFmt(v.__type == oldV.__type, "Cannot change type while update module, new type %s, old type %s.", v.__type or "nil", oldV.__type or "nil")
+						table.clone(v, oldV)
+					else
+						oldModule[k] = v
+					end
+				else -- Is data.
+					if oldV then
+						-- Do nothing.
+					else
+						oldModule[k] = v
+					end
+				end
+			elseif vType == "function" then
+				oldModule[k] = v
+			else -- Is data.
+				if oldV then
+					-- Do nothing.
 				else
 					oldModule[k] = v
 				end
-			else
-				oldModule[k] = v
 			end
 		end
 	end
@@ -169,7 +186,6 @@ local function testSerialize()
 	local unserialize = Utils.unserialize
 
 	local LinkedList = require("linked_list")
-	LinkedList.name = Utils
 	local list1 = LinkedList:new()
 	list1:add("a")
 	list1:add("b")

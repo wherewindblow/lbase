@@ -236,3 +236,10 @@ function debug.fulltraceback(level, showInternal)
 
     return "debug.fulltraceback internal error: " .. msg
 end
+
+---
+--- Hook for error.
+function debug.errorhook(errMsg)
+	print(errMsg)
+	print(debug.fulltraceback(2))
+end

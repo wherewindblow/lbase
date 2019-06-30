@@ -51,7 +51,7 @@ end
 --- @param value any
 --- @return table Node that contain value.
 function LinkedList:remove(value)
-	assert(value, "value cannot be nil")
+	assert(value, "Value cannot be nil")
 	local node = self.m_head
 	while node do
 		if node.value == value then
@@ -118,7 +118,7 @@ function LinkedList:removeIf(isTarget)
 end
 
 function LinkedList:removeNode(node)
-	assertFmt(self.m_nodeList[node], "invalid node in LinkedList")
+	assert(self.m_nodeList[node], "Invalid node in LinkedList.")
 	node.previous.next = node.next
 	node.next.previous = node.previous
 	self.m_size = self.m_size - 1

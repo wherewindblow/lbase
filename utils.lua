@@ -47,18 +47,14 @@ function Utils.update(module)
 						oldModule[k] = v
 					end
 				else -- Is data.
-					if oldV then
-						-- Do nothing.
-					else
+					if not oldV then
 						oldModule[k] = v
 					end
 				end
 			elseif vType == "function" then
 				oldModule[k] = v
 			else -- Is data.
-				if oldV then
-					-- Do nothing.
-				else
+				if not oldV then
 					oldModule[k] = v
 				end
 			end
@@ -221,11 +217,13 @@ b")
 	local Base = Object:inherit("TestSerializeBase")
 
 	local Queue = require("queue")
+
 	function Base:constructor()
 		self.m_list = LinkedList:new()
 		self.m_queue = Queue:new()
 		self:finishCall(Base.constructor)
 	end
+	Base:expectCall("constructor")
 
 	function Base:addDefaultValue()
 		self.m_list:add(1)
@@ -234,7 +232,6 @@ b")
 		self.m_queue:push("b")
 	end
 
-	Base:expectCall("constructor")
 	Base:setSerializableMembers({"m_list", "m_queue"})
 
 	local Derived = Base:inherit("TestSerializeDerived")
@@ -245,11 +242,11 @@ b")
 
 	Derived:setSerializableMembers({"m_name"})
 
-	local test1 = Derived:new("Derived")
-	test1:addDefaultValue()
-	local test1Str = serialize(test1)
-	local test2 = unserialize(test1Str)
-	assert(serialize(test2) == test1Str)
+	local derived1 = Derived:new("Derived")
+	derived1:addDefaultValue()
+	local derived1Str = serialize(derived1)
+	local derived2 = unserialize(derived1Str)
+	assert(serialize(derived2) == derived1Str)
 
 	AllClass["TestSerializeBase"] = nil
 	AllClass["TestSerializeDerived"] = nil

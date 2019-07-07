@@ -278,4 +278,11 @@ function Utils.proxyTable(setCallback, getCallback)
 	return proxy
 end
 
+---
+--- Gets snapshot info that uses in error handler.
+--- @return string
+function Utils.getSnapshot()
+	return "type=Module, name=Utils"
+end
+
 return Utils

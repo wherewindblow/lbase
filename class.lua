@@ -454,7 +454,7 @@ end
 --- Gets snapshot info that uses in error handler.
 --- @return string
 function Object:getSnapshot()
-	return "className=" .. self:getClassName()
+	return string.format("type=%s, className=%s", self.__type, self:getClassName())
 end
 
 --Object:expectCall("constructor") -- An example.

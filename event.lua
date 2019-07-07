@@ -51,6 +51,13 @@ function Event:dispatch(eventName, eventArgs)
 	end
 end
 
+---
+--- Gets snapshot info that uses in error handler.
+--- @return string
+function Event:getSnapshot()
+	return "type=Module, name=Event"
+end
+
 local function test()
 	Event:register("work")
 

@@ -59,25 +59,30 @@ Queue:setSerializableMembers({"m_list"})
 
 local function test()
 	local queue = Queue:new()
-	queue:push(1)
-	queue:push(2)
-	assert(not queue:empty() and queue:size() == 2)
-	assert(queue:front() == 1)
+	assert(queue:empty())
+
+	local valueArray = { 1, 2, 3}
+	for _, value in ipairs(valueArray) do
+		queue:push(value)
+	end
+	assert(not queue:empty() and queue:size() == table.size(valueArray))
+	assert(queue:front() == valueArray[1])
 
 	local iterator = queue:iterator()
-	local currentValue = 1
+	local index = 1
 	while true do
 		local value = iterator()
 		if not value then
 			break
 		end
 
-		assert(currentValue == value)
-		currentValue = currentValue + 1
+		assert(value, valueArray[index])
+		index = index + 1
 	end
 
+	local beforeSize = queue:size()
 	queue:pop()
-	assert(queue:size() == 1 and queue:iterator()() == 2)
+	assert(queue:size() == beforeSize - 1 and queue:iterator()() == 2)
 end
 
 test()

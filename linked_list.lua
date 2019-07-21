@@ -234,28 +234,34 @@ local function test()
 	local list = LinkedList:new()
 	assert(list:empty())
 
-	list:pushBack(1)
-	list:pushBack(2)
-	assert(not list:empty() and list:size() == 2)
+	local valueArray = { 1, 2, 3}
+	for _, value in ipairs(valueArray) do
+		list:pushBack(value)
+	end
+
+	assert(not list:empty() and list:size() == table.size(valueArray))
 
 	local iterator = list:iterator()
-	local currentValue = 1
+	local index = 1
 	while true do
 		local value = iterator()
 		if not value then
 			break
 		end
 
-		assert(currentValue == value)
-		currentValue = currentValue + 1
+		assert(value == valueArray[index])
+		index = index + 1
 	end
 
+	local oldSize = list:size()
 	list:removeFront()
-	assert(list:size() == 1 and list:iterator()() == 2)
+	assert(list:size() == oldSize - 1 and list:iterator()() == valueArray[2])
 
-	list:pushFront(1)
+	local beforeSize = list:size()
+	local newValue = 1
+	list:pushFront(newValue)
 	list:removeBack()
-	assert(list:size() == 1 and list:iterator()() == 1)
+	assert(list:size() == beforeSize and list:iterator()() == newValue)
 end
 
 test()

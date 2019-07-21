@@ -220,6 +220,7 @@ function Object:createFunction(originFunc)
 			if not classMembers then
 				classMembers = {
 					__type = TABLE_TYPE.Object, -- Optimize get type operation.
+					__isClassMembers = true,
 				}
 
 				-- Don't need weak table. It metatable is already is weak table?
@@ -252,18 +253,20 @@ end
 --- @return table
 function Object:getClass()
 	local rawType = rawget(self, "__type")
-	if rawType == TABLE_TYPE.Class then
+	if rawType == TABLE_TYPE.Class then -- Is class.
 		return self
 	elseif rawType == TABLE_TYPE.Object then
-		local Class = getmetatable(self).__index
-		if Class.__type == TABLE_TYPE.Class then
-			return Class
-		end
-	elseif self.__type == TABLE_TYPE.Object then -- Get type from metatable.
-		local obj = getmetatable(self).__index
-		local Class = getmetatable(obj).__index
-		if Class.__type == TABLE_TYPE.Class then
-			return Class
+		if rawget(self, "__isClassMembers") then -- Is object class members.
+			local obj = getmetatable(self).__index
+			local Class = getmetatable(obj).__index
+			if Class.__type == TABLE_TYPE.Class then
+				return Class
+			end
+		else -- Is object root.
+			local Class = getmetatable(self).__index
+			if Class.__type == TABLE_TYPE.Class then
+				return Class
+			end
 		end
 	else
 		errorFmt("Unknown type %s.", self.__type or "")

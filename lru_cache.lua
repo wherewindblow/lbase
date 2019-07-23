@@ -46,6 +46,19 @@ function LruCache:getCache(key)
 end
 
 ---
+--- Returns the value that use like standard `pairs`.
+function LruCache:pairs()
+	local gnext = _G.next
+	local function next(cacheList, key)
+		local nextKey, nextCache = gnext(cacheList, key)
+		if nextKey then
+			return nextKey, nextCache.data
+		end
+	end
+	return next, self.m_cacheList, nil
+end
+
+---
 --- Gets capacity.
 function LruCache:getCapacity()
 	return self.m_capacity
@@ -84,3 +97,5 @@ local function test()
 end
 
 test()
+
+return LruCache

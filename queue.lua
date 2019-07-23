@@ -20,8 +20,7 @@ end
 --- Returns front value.
 --- @return any
 function Queue:front()
-	local iterator = self.m_list:iterator()
-	return iterator()
+	return self.m_list:front()
 end
 
 ---
@@ -31,10 +30,9 @@ function Queue:pop()
 end
 
 ---
---- Returns iterator to for each value.
---- @return function
-function Queue:iterator()
-	return self.m_list:iterator()
+--- Returns the value that use like standard `pairs`.
+function Queue:pairs()
+	return self.m_list:pairs()
 end
 
 function Queue:debug()
@@ -68,21 +66,15 @@ local function test()
 	assert(not queue:empty() and queue:size() == table.size(valueArray))
 	assert(queue:front() == valueArray[1])
 
-	local iterator = queue:iterator()
 	local index = 1
-	while true do
-		local value = iterator()
-		if not value then
-			break
-		end
-
-		assert(value, valueArray[index])
+	for k, v in queue:pairs() do
+		assert(v == valueArray[index])
 		index = index + 1
 	end
 
 	local beforeSize = queue:size()
 	queue:pop()
-	assert(queue:size() == beforeSize - 1 and queue:iterator()() == 2)
+	assert(queue:size() == beforeSize - 1 and queue:front() == 2)
 end
 
 test()

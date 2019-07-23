@@ -183,10 +183,12 @@ local function testSerialize()
 
 	local LinkedList = require("linked_list")
 	local list1 = LinkedList:new()
-	list1:add("a")
-	list1:add("b")
-	list1:add("a\
-b")
+	local valueArray = { "a", "b", "a\
+b"}
+	for i, v in ipairs(valueArray) do
+		list1:add(v)
+	end
+
 	local list1Str = serialize(list1)
 	local t = {
 		"a",
@@ -200,12 +202,12 @@ b")
 	local tStr = serialize(t)
 
 	local list2 = unserialize(list1Str)
-	local iterator = list2:iterator()
-	assert(list2:size() == 3)
-	assert(iterator() == "a")
-	assert(iterator() == "b")
-	assert(iterator() == "a\
-b")
+	local index = 1
+	for k, v in list2:pairs() do
+		assert(v == valueArray[index])
+		index = index + 1
+	end
+
 	assert(serialize(list2) == list1Str)
 
 	local t2 = unserialize(tStr)

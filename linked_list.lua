@@ -170,17 +170,15 @@ function LinkedList:size()
 end
 
 ---
---- Returns iterator that can for each value.
---- @return function
-function LinkedList:iterator()
-	local next = self.m_head.next
-	local function nextValue()
-		local value = next.value
-		next = next.next
-		return value
+--- Returns the value that use like standard `pairs`.
+function LinkedList:pairs()
+	local function next(self, node)
+		node = node.next
+		if node and node.value then
+			return node, node.value
+		end
 	end
-
-	return nextValue
+	return next, self, self.m_head
 end
 
 ---
@@ -207,17 +205,10 @@ LinkedList:setSerializableMembers({"allValue"})
 
 function LinkedList:serializeMember(name)
 	if name == "allValue" then
-		local iterator = self:iterator()
 		local allValue = {}
-		while true do
-			local value = iterator()
-			if not value then
-				break
-			end
-
-			table.insert(allValue, value)
+		for k, v in self:pairs() do
+			table.insert(allValue, v)
 		end
-
 		return allValue
 	end
 end
@@ -241,27 +232,21 @@ local function test()
 
 	assert(not list:empty() and list:size() == table.size(valueArray))
 
-	local iterator = list:iterator()
 	local index = 1
-	while true do
-		local value = iterator()
-		if not value then
-			break
-		end
-
-		assert(value == valueArray[index])
+	for k, v in list:pairs() do
+		assert(v == valueArray[index])
 		index = index + 1
 	end
 
 	local oldSize = list:size()
 	list:removeFront()
-	assert(list:size() == oldSize - 1 and list:iterator()() == valueArray[2])
+	assert(list:size() == oldSize - 1 and list:front() == valueArray[2])
 
 	local beforeSize = list:size()
 	local newValue = 1
 	list:pushFront(newValue)
 	list:removeBack()
-	assert(list:size() == beforeSize and list:iterator()() == newValue)
+	assert(list:size() == beforeSize and list:front() == newValue)
 end
 
 test()

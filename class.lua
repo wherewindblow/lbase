@@ -32,6 +32,9 @@ AllClass = {
 	[Object.__className] = { Class = Object, source = debug.getinfo(1).source }
 }
 
+--- All origin func info.
+AllOriginFunc = {}
+
 ---
 --- Returns base class.
 --- @param Class table
@@ -191,7 +194,7 @@ function Object:inherit(className)
 					end
 				end
 
-				v = Class:createFunction(v)
+				v = Class:createFunction(k, v)
 			end
 
 			rawset(t, k, v)
@@ -211,7 +214,7 @@ end
 --- NOTE: This function must call by class.
 --- @param originFunc function
 --- @return function That can be assign to class.
-function Object:createFunction(originFunc)
+function Object:createFunction(funcName, originFunc)
 	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local className = self.__className
 	local function funcWrapper(self, ...)
@@ -236,15 +239,9 @@ function Object:createFunction(originFunc)
 		end
 
 		-- The following will be optimize by tail call. And trackback will not show original function name.
-		--return originFunc(self, ...)
-
-		-- To make trackback have original function name, but not efficient.
-		--local ret = {originFunc(self, ...)}
-		--return unpack(ret)
-
-		-- To make trackback have original function name, but will return additional nil.
-		return originFunc(self, ...), nil
+		return originFunc(self, ...)
 	end
+	AllOriginFunc[originFunc] = funcName
 	return funcWrapper
 end
 

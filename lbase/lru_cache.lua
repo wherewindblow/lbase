@@ -1,7 +1,8 @@
-local LinkedList = require("linked_list")
+local Class = require("lbase/class")
+local LinkedList = require("lbase/linked_list")
 
 --- @class LruCache : Object
-local LruCache = Object:inherit("LruCache")
+local LruCache = Class.Object:inherit("LruCache")
 
 ---
 --- Constructs lru cache object.

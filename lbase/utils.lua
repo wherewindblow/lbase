@@ -1,3 +1,5 @@
+local Class = require("lbase/class")
+
 -- Optimize.
 local pairs = pairs
 local type = type
@@ -6,7 +8,7 @@ local format = string.format
 local stringlen = string.len
 local stringsub = string.sub
 local stringgsub = string.gsub
-local TABLE_TYPE = TABLE_TYPE
+local TABLE_TYPE = Class.TABLE_TYPE
 local assertFmt = assertFmt
 
 local Utils = {}
@@ -172,7 +174,7 @@ function Utils.unserialize(str)
 	assert(chunk, err)
 	local t = chunk()
 	if t.__className then
-		return Object:unserialize(t)
+		return Class.Object:unserialize(t)
 	end
 	return t
 end
@@ -181,7 +183,7 @@ local function testSerialize()
 	local serialize = Utils.serialize
 	local unserialize = Utils.unserialize
 
-	local LinkedList = require("linked_list")
+	local LinkedList = require("lbase/linked_list")
 	local list1 = LinkedList:new()
 	local valueArray = { "a", "b", "a\
 b"}
@@ -216,9 +218,9 @@ b"}
 	assert(t2.b.d[1] == "e")
 	assert(serialize(t2) == tStr)
 
-	local Base = Object:inherit("TestSerializeBase")
+	local Base = Class.Object:inherit("TestSerializeBase")
 
-	local Queue = require("queue")
+	local Queue = require("lbase/queue")
 
 	function Base:constructor()
 		self.m_list = LinkedList:new()
@@ -238,7 +240,7 @@ b"}
 
 	local Derived = Base:inherit("TestSerializeDerived")
 	function Derived:constructor(name)
-		super(Derived).constructor(self)
+		Class.super(Derived).constructor(self)
 		self.m_name = name
 	end
 
@@ -250,8 +252,8 @@ b"}
 	local derived2 = unserialize(derived1Str)
 	assert(serialize(derived2) == derived1Str)
 
-	AllClass["TestSerializeBase"] = nil
-	AllClass["TestSerializeDerived"] = nil
+	Class.allClass["TestSerializeBase"] = nil
+	Class.allClass["TestSerializeDerived"] = nil
 end
 
 testSerialize()
@@ -285,6 +287,25 @@ end
 --- @return string
 function Utils.getSnapshot()
 	return "type=Module, name=Utils"
+end
+
+---
+--- After call this function, all variable are recommending to store in local.
+--- To avoid add too many variable in global.
+function Utils.avoidAddGlobalVariable()
+	local newGlobal = {}
+	local metatable = getmetatable(_G) or {}
+
+	metatable.__newindex = function(t, k, v)
+		print(string.format("WARNING: Add global variable \"%s\", type %s.", k, type(v)), debug.traceback())
+		newGlobal[k] = v
+	end
+
+	metatable.__index = function(t, k)
+		return newGlobal[k]
+	end
+
+	setmetatable(_G, metatable)
 end
 
 return Utils

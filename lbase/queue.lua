@@ -1,7 +1,8 @@
-local LinkedList = require("linked_list")
+local Class = require("lbase/class")
+local LinkedList = require("lbase/linked_list")
 
 --- @class Queue: Object
-local Queue = Object:inherit("Queue")
+local Queue = Class.Object:inherit("Queue")
 
 ---
 --- Constructs queue object.

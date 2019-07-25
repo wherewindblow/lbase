@@ -145,6 +145,8 @@ local function localVariables(level)
 	return str
 end
 
+local Class
+
 local function fulltraceback(level)
     level = level or 1
 	-- Outside level must add some level.
@@ -181,7 +183,11 @@ local function fulltraceback(level)
                 -- C function or tail call.
                 traceInfo = format("%s ?", traceInfo)
             else
-				local originName = AllOriginFunc[funcInfo.func]
+				if not Class then
+					xpcall(function() Class = require("lbase/class") end)
+				end
+
+				local originName = Class and Class.allOriginFunc[funcInfo.func]
 				if originName then
 					traceInfo = format("%s in function '%s'", traceInfo, originName)
 				else

@@ -12,34 +12,39 @@
 ---    When out of class function to use object, all member create in object is public.
 --- TODO: Support private function.
 
+local Class = {}
+
 --- Table type to distinguish general table and special table.
-TABLE_TYPE = {
+Class.TABLE_TYPE = {
 	Class = "Class",
 	Object = "Object",
 }
 
 --- @class Object
 --- Base class to provide class relative function.
-Object = {
+--- NOTE: Must put it in a local variable and then put to Class table to enable Emmylua completion.
+local Object = {
 	__className = "Object",
-	__type = TABLE_TYPE.Class,
+	__type = Class.TABLE_TYPE.Class,
 	__expectCall = {},
 	__virtualFuncList = {},
 }
 
+Class.Object = Object
+
 --- All class set that map class name to class info.
-AllClass = {
-	[Object.__className] = { Class = Object, source = debug.getinfo(1).source }
+Class.allClass = {
+	[Class.Object.__className] = { class = Class.Object, source = debug.getinfo(1).source }
 }
 
 --- All origin func info.
-AllOriginFunc = {}
+Class.allOriginFunc = {}
 
 ---
 --- Returns base class.
 --- @param Class table
 --- @return table
-function super(Class)
+function Class.super(Class)
 	return Class:getBaseClass()
 end
 
@@ -51,10 +56,11 @@ local rawget = rawget
 local rawset = rawset
 local getmetatable = getmetatable
 local setmetatable = setmetatable
-local TABLE_TYPE = TABLE_TYPE
+local TABLE_TYPE = Class.TABLE_TYPE
 local assertFmt = assertFmt
 local errorFmt = errorFmt
-local super = super
+local super = Class.super
+
 
 ---
 --- New object and will call `constructor`.
@@ -73,19 +79,19 @@ function Object:new(...)
 	setmetatable(obj, { __index = self })
 
 	-- Collect all expect call function of object.
-	local Class = self
-	while Class do
-		for funcName, _ in pairs(Class.__expectCall) do
-			local func = rawget(Class, funcName)
-			assertFmt(func, "Not exist expect call function %s:%s", Class.__className, funcName)
+	local class = self
+	while class do
+		for funcName, _ in pairs(class.__expectCall) do
+			local func = rawget(class, funcName)
+			assertFmt(func, "Not exist expect call function %s:%s", class.__className, funcName)
 
 			obj.__expectCall[func] = {
-				className = Class.__className,
+				className = class.__className,
 				funcName = funcName,
 				callTimes = 0,
 			}
 		end
-		Class = super(Class)
+		class = super(class)
 	end
 
 	-- Call constructor of object. Must call all expect call function in constructor.
@@ -117,13 +123,13 @@ end
 function Object:delete()
 	assertFmt(self.__type == TABLE_TYPE.Object, "This function must call by object.")
 	-- Call all destructor.
-	local Class = self:getClass()
-	while Class do
-		local destructor = rawget(Class, "destructor")
+	local class = self:getClass()
+	while class do
+		local destructor = rawget(class, "destructor")
 		if destructor then
 			destructor(self)
 		end
-		Class = super(Class)
+		class = super(class)
 	end
 end
 
@@ -143,13 +149,13 @@ function Object:inherit(className)
 	assertFmt(type(className) == "string", "className must be string.")
 
 	local callerInfo = debug.getinfo(2)
-	local classInfo = AllClass[className]
+	local classInfo = Class.allClass[className]
 	if classInfo then
 		-- Avoid register class repeatedly in difference source. But must check by manual when in same source.
 		assertFmt(callerInfo.source == classInfo.source, "Already register class %s in %s", className, classInfo.source)
 	end
 
-	local Class = {
+	local class = {
 		__className = className,
 		__type = TABLE_TYPE.Class,
 		__expectCall = {},
@@ -167,45 +173,45 @@ function Object:inherit(className)
 				if t[funcName] then
 					-- Checks is virtual function.
 					local isVirtualFunc
-					local CurClass = Class
-					while CurClass do
-						local virtualFuncList = CurClass.__virtualFuncList
+					local curClass = class
+					while curClass do
+						local virtualFuncList = curClass.__virtualFuncList
 						if virtualFuncList[funcName] then
 							isVirtualFunc = true
 							break
 						end
-						CurClass = super(CurClass)
+						curClass = super(curClass)
 					end
 
 					if not isVirtualFunc then
 						-- Get class name of function.
 						local funcClassName
-						CurClass = Class
-						while CurClass do
-							local baseFunc = rawget(CurClass, funcName)
+						curClass = class
+						while curClass do
+							local baseFunc = rawget(curClass, funcName)
 							if baseFunc then
-								funcClassName = CurClass.__className
+								funcClassName = curClass.__className
 								break
 							end
-							CurClass = super(CurClass)
+							curClass = super(curClass)
 						end
 
 						errorFmt("Override not virtual function %s:%s, must call setToVirtual to set function to virutal.", funcClassName, funcName)
 					end
 				end
 
-				v = Class:createFunction(k, v)
+				v = class:createFunction(k, v)
 			end
 
 			rawset(t, k, v)
 		end
 	}
-	setmetatable(Class, metatable)
+	setmetatable(class, metatable)
 
 	if not classInfo then
-		AllClass[className] = { Class = Class, source = callerInfo.source }
+		Class.allClass[className] = { class = class, source = callerInfo.source }
 	end
-	return Class
+	return class
 end
 
 ---
@@ -241,7 +247,7 @@ function Object:createFunction(funcName, originFunc)
 		-- The following will be optimize by tail call. And trackback will not show original function name.
 		return originFunc(self, ...)
 	end
-	AllOriginFunc[originFunc] = funcName
+	Class.allOriginFunc[originFunc] = funcName
 	return funcWrapper
 end
 
@@ -255,14 +261,14 @@ function Object:getClass()
 	elseif rawType == TABLE_TYPE.Object then
 		if rawget(self, "__isClassMembers") then -- Is object class members.
 			local obj = getmetatable(self).__index
-			local Class = getmetatable(obj).__index
-			if Class.__type == TABLE_TYPE.Class then
-				return Class
+			local class = getmetatable(obj).__index
+			if class.__type == TABLE_TYPE.Class then
+				return class
 			end
 		else -- Is object root.
-			local Class = getmetatable(self).__index
-			if Class.__type == TABLE_TYPE.Class then
-				return Class
+			local class = getmetatable(self).__index
+			if class.__type == TABLE_TYPE.Class then
+				return class
 			end
 		end
 	else
@@ -274,8 +280,8 @@ end
 --- Gets class name.
 --- @return string
 function Object:getClassName()
-	local Class = self:getClass()
-	return Class.__className
+	local class = self:getClass()
+	return class.__className
 end
 
 ---
@@ -287,9 +293,9 @@ function Object:getBaseClass()
 	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 	local metatable = getmetatable(self)
 	if metatable then
-		local BaseClass = metatable.__index
-		if BaseClass.__type == TABLE_TYPE.Class then
-			return BaseClass
+		local baseClass = metatable.__index
+		if baseClass.__type == TABLE_TYPE.Class then
+			return baseClass
 		end
 	end
 	--local BaseClass = getmetatable(self)
@@ -350,10 +356,10 @@ function Object:serialize()
 		__members = {}
 	}
 
-	local Class = self:getClass()
-	while Class do
-		local serializableMembers = rawget(Class, "__serializableMembers")
-		local className = Class.__className
+	local class = self:getClass()
+	while class do
+		local serializableMembers = rawget(class, "__serializableMembers")
+		local className = class.__className
 		local classMembers = self.__members[className]
 
 		if serializableMembers and next(serializableMembers) and
@@ -361,7 +367,7 @@ function Object:serialize()
 			t.__members[className] = t.__members[className] or {}
 			local tMembers = t.__members[className]
 			for _, varName in pairs(serializableMembers) do
-				local varValue = Class.serializeMember(classMembers, varName)
+				local varValue = class.serializeMember(classMembers, varName)
 				if varValue then
 					if varValue.__type == TABLE_TYPE.Object then
 						tMembers[varName] = varValue:serialize()
@@ -372,7 +378,7 @@ function Object:serialize()
 			end
 		end
 
-		Class = super(Class)
+		class = super(class)
 	end
 
 	return t
@@ -387,11 +393,11 @@ end
 function Object:unserialize(t)
 	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
 
-	local Class = AllClass[t.__className].Class
-	local obj = Class:new() -- Must allow call `constructor` without arguments.
+	local class = Class.allClass[t.__className].class
+	local obj = class:new() -- Must allow call `constructor` without arguments.
 
-	while Class do
-		local className = Class.__className
+	while class do
+		local className = class.__className
 		local tMembers = t.__members[className]
 		if tMembers then
 			local classMembers = obj.__members[className]
@@ -407,11 +413,11 @@ function Object:unserialize(t)
 				end
 				-- Cannot use obj pass as self, because it may be Object function and not create by `createFunction`.
 				-- So must pass classMembers by manual.
-				Class.unserializeMember(classMembers, varName, varValue)
+				class.unserializeMember(classMembers, varName, varValue)
 			end
 		end
 
-		Class = super(Class)
+		class = super(class)
 	end
 
 	return obj
@@ -463,3 +469,5 @@ Object:setToVirtual("destructor")
 Object:setToVirtual("serializeMember")
 Object:setToVirtual("unserializeMember")
 Object:setToVirtual("getSnapshot")
+
+return Class

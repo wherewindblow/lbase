@@ -1,5 +1,7 @@
+local Class = require("lbase/class")
+
 --- @class LinkedList : Object
-local LinkedList = Object:inherit("LinkedList")
+local LinkedList = Class.Object:inherit("LinkedList")
 
 ---
 --- Constructs list object.

@@ -184,7 +184,7 @@ local function fulltraceback(level)
                 traceInfo = format("%s ?", traceInfo)
             else
 				if not Class then
-					xpcall(function() Class = require("lbase/class") end)
+					pcall(function() Class = require("lbase/class") end)
 				end
 
 				local originName = Class and Class.allOriginFunc[funcInfo.func]

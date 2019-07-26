@@ -470,4 +470,53 @@ Object:setToVirtual("serializeMember")
 Object:setToVirtual("unserializeMember")
 Object:setToVirtual("getSnapshot")
 
+local function test()
+	local Base = Object:inherit("TestBase")
+
+	function Base:constructor(name)
+		self.m_name = name
+	end
+
+	function Base:getBaseName()
+		return self.m_name
+	end
+
+	function Base:foo() end
+
+	local base = Base:new()
+	assert(base.foo)
+
+	local Derived = Base:inherit("TestDerived")
+
+	function Derived:constructor(name, baseName)
+		Class.super(Derived).constructor(self, baseName)
+		self.m_name = name
+	end
+
+	function Derived:getDerivedName()
+		return self.m_name
+	end
+
+	local ret, msg = pcall(function ()
+		function Derived:getBaseName()
+		end
+	end)
+
+	assert(not ret)
+
+	Base:setToVirtual("getBaseName")
+	function Derived:getBaseName()
+	end
+
+	local derived = Derived:new("derived", "base")
+	assert(derived:getDerivedName() ~= derived:getBaseName())
+
+	derived:delete()
+
+	Class.allClass["TestBase"] = nil
+	Class.allClass["TestDerived"] = nil
+end
+
+test()
+
 return Class

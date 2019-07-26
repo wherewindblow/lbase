@@ -183,15 +183,25 @@ local function testSerialize()
 	local serialize = Utils.serialize
 	local unserialize = Utils.unserialize
 
+	-- Serialize linked list.
 	local LinkedList = require("lbase/linked_list")
 	local list1 = LinkedList:new()
-	local valueArray = { "a", "b", "a\
-b"}
+
+	local valueArray = { "a", "b", "c" }
 	for i, v in ipairs(valueArray) do
 		list1:add(v)
 	end
 
 	local list1Str = serialize(list1)
+	local list2 = unserialize(list1Str)
+	local index = 1
+	for k, v in list2:pairs() do
+		assert(v == valueArray[index])
+		index = index + 1
+	end
+	assert(serialize(list2) == list1Str)
+
+	-- Serialize table.
 	local t = {
 		"a",
 		b = {
@@ -203,31 +213,24 @@ b"}
 	}
 	local tStr = serialize(t)
 
-	local list2 = unserialize(list1Str)
-	local index = 1
-	for k, v in list2:pairs() do
-		assert(v == valueArray[index])
-		index = index + 1
-	end
-
-	assert(serialize(list2) == list1Str)
-
 	local t2 = unserialize(tStr)
 	assert(t2[1] == "a")
 	assert(t2.b[1] == "c")
 	assert(t2.b.d[1] == "e")
 	assert(serialize(t2) == tStr)
 
-	local Base = Class.Object:inherit("TestSerializeBase")
-
+	-- Serialize object.
 	local Queue = require("lbase/queue")
+	local Base = Class.Object:inherit("TestSerializeBase")
 
 	function Base:constructor()
 		self.m_list = LinkedList:new()
 		self.m_queue = Queue:new()
 		self:finishCall(Base.constructor)
 	end
+
 	Base:expectCall("constructor")
+	Base:setSerializableMembers({"m_list", "m_queue"})
 
 	function Base:addDefaultValue()
 		self.m_list:add(1)
@@ -235,8 +238,6 @@ b"}
 		self.m_queue:push("a")
 		self.m_queue:push("b")
 	end
-
-	Base:setSerializableMembers({"m_list", "m_queue"})
 
 	local Derived = Base:inherit("TestSerializeDerived")
 	function Derived:constructor(name)

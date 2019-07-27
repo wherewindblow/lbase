@@ -6,6 +6,7 @@ local LruCache = Class.Object:inherit("LruCache")
 
 ---
 --- Constructs lru cache object.
+--- @param capacity number
 function LruCache:constructor(capacity)
 	self.m_recentList = LinkedList:new()
 	self.m_cacheList = {}

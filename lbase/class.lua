@@ -15,17 +15,19 @@
 local Class = {}
 
 --- Table type to distinguish general table and special table.
-Class.TABLE_TYPE = {
-	Class = "Class",
-	Object = "Object",
+local TABLE_TYPE = {
+	CLASS = "Class",
+	OBJECT = "Object",
 }
+
+Class.TABLE_TYPE = TABLE_TYPE
 
 --- @class Object
 --- Base class to provide class relative function.
 --- NOTE: Must put it in a local variable and then put to Class table to enable Emmylua completion.
 local Object = {
 	__className = "Object",
-	__type = Class.TABLE_TYPE.Class,
+	__type = Class.TABLE_TYPE.CLASS,
 	__expectCall = {},
 	__virtualFuncList = {},
 }
@@ -33,20 +35,26 @@ local Object = {
 Class.Object = Object
 
 --- All class set that map class name to class info.
-Class.allClass = {
+local allClass = {
 	[Class.Object.__className] = { class = Class.Object, source = debug.getinfo(1).source }
 }
 
+Class.allClass = allClass
+
 --- All origin func info.
-Class.allOriginFunc = {}
+local allOriginFunc = {}
+
+Class.allOriginFunc = allOriginFunc
 
 ---
 --- Returns base class.
 --- @param Class table
 --- @return table
-function Class.super(Class)
+local function super(Class)
 	return Class:getBaseClass()
 end
+
+Class.super = super
 
 -- Optimize.
 local pairs = pairs
@@ -56,10 +64,8 @@ local rawget = rawget
 local rawset = rawset
 local getmetatable = getmetatable
 local setmetatable = setmetatable
-local TABLE_TYPE = Class.TABLE_TYPE
 local assertFmt = assertFmt
 local errorFmt = errorFmt
-local super = Class.super
 
 
 ---
@@ -68,9 +74,9 @@ local super = Class.super
 ---       2. Cannot override this function. Override `constructor` to customize.
 --- @return table Object of specific class.
 function Object:new(...)
-	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 	local obj = {
-		__type = TABLE_TYPE.Object,
+		__type = TABLE_TYPE.OBJECT,
 		__expectCall = {},
 		__members = {},
 	}
@@ -121,7 +127,7 @@ end
 --- NOTE: 1. This function must call by object.
 ---       2. Cannot override this function. Override `destructor` to customize.
 function Object:delete()
-	assertFmt(self.__type == TABLE_TYPE.Object, "This function must call by object.")
+	assertFmt(self.__type == TABLE_TYPE.OBJECT, "This function must call by object.")
 	-- Call all destructor.
 	local class = self:getClass()
 	while class do
@@ -145,11 +151,11 @@ end
 --- @param className string Derived class name.
 --- @return table Derived class
 function Object:inherit(className)
-	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 	assertFmt(type(className) == "string", "className must be string.")
 
 	local callerInfo = debug.getinfo(2)
-	local classInfo = Class.allClass[className]
+	local classInfo = allClass[className]
 	if classInfo then
 		-- Avoid register class repeatedly in difference source. But must check by manual when in same source.
 		assertFmt(callerInfo.source == classInfo.source, "Already register class %s in %s", className, classInfo.source)
@@ -157,7 +163,7 @@ function Object:inherit(className)
 
 	local class = {
 		__className = className,
-		__type = TABLE_TYPE.Class,
+		__type = TABLE_TYPE.CLASS,
 		__expectCall = {},
 		__virtualFuncList = {},
 	}
@@ -209,7 +215,7 @@ function Object:inherit(className)
 	setmetatable(class, metatable)
 
 	if not classInfo then
-		Class.allClass[className] = { class = class, source = callerInfo.source }
+		allClass[className] = { class = class, source = callerInfo.source }
 	end
 	return class
 end
@@ -221,14 +227,14 @@ end
 --- @param originFunc function
 --- @return function That can be assign to class.
 function Object:createFunction(funcName, originFunc)
-	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 	local className = self.__className
 	local function funcWrapper(self, ...)
-		if self.__type == TABLE_TYPE.Object then
+		if self.__type == TABLE_TYPE.OBJECT then
 			local classMembers = self.__members[className]
 			if not classMembers then
 				classMembers = {
-					__type = TABLE_TYPE.Object, -- Optimize get type operation.
+					__type = TABLE_TYPE.OBJECT, -- Optimize get type operation.
 					__isClassMembers = true,
 				}
 
@@ -247,7 +253,7 @@ function Object:createFunction(funcName, originFunc)
 		-- The following will be optimize by tail call. And trackback will not show original function name.
 		return originFunc(self, ...)
 	end
-	Class.allOriginFunc[originFunc] = funcName
+	allOriginFunc[originFunc] = funcName
 	return funcWrapper
 end
 
@@ -256,18 +262,18 @@ end
 --- @return table
 function Object:getClass()
 	local rawType = rawget(self, "__type")
-	if rawType == TABLE_TYPE.Class then -- Is class.
+	if rawType == TABLE_TYPE.CLASS then -- Is class.
 		return self
-	elseif rawType == TABLE_TYPE.Object then
+	elseif rawType == TABLE_TYPE.OBJECT then
 		if rawget(self, "__isClassMembers") then -- Is object class members.
 			local obj = getmetatable(self).__index
 			local class = getmetatable(obj).__index
-			if class.__type == TABLE_TYPE.Class then
+			if class.__type == TABLE_TYPE.CLASS then
 				return class
 			end
 		else -- Is object root.
 			local class = getmetatable(self).__index
-			if class.__type == TABLE_TYPE.Class then
+			if class.__type == TABLE_TYPE.CLASS then
 				return class
 			end
 		end
@@ -290,11 +296,11 @@ end
 --- In fact, this function can be call by object, but will make some mistake when use to call base class constructor.
 --- @return table Base class or nil.
 function Object:getBaseClass()
-	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 	local metatable = getmetatable(self)
 	if metatable then
 		local baseClass = metatable.__index
-		if baseClass.__type == TABLE_TYPE.Class then
+		if baseClass.__type == TABLE_TYPE.CLASS then
 			return baseClass
 		end
 	end
@@ -316,7 +322,7 @@ end
 --- NOTE: This function must call by class.
 --- @param funcName string
 function Object:expectCall(funcName)
-	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 	local func = rawget(self, funcName)
 	assertFmt(func, "Not exist function %s:%s", self.__className, funcName)
 	self.__expectCall[funcName] = true
@@ -328,7 +334,7 @@ end
 ---       2. `func` must get from class, because use self will not return current class function when at base class.
 --- @param func function
 function Object:finishCall(func)
-	assertFmt(self.__type == TABLE_TYPE.Object, "This function must call by object.")
+	assertFmt(self.__type == TABLE_TYPE.OBJECT, "This function must call by object.")
 	if self.__expectCall and self.__expectCall[func] then
 		-- Object __expectCall is difference from Class.
 		local callInfo = self.__expectCall[func]
@@ -341,7 +347,7 @@ end
 --- NOTE: This function must call by class.
 --- @param funcName string
 function Object:setToVirtual(funcName)
-	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 	local func = rawget(self, funcName)
 	assertFmt(func, "Not exist function %s:%s", self.__className, funcName)
 	self.__virtualFuncList[funcName] = true
@@ -369,7 +375,7 @@ function Object:serialize()
 			for _, varName in pairs(serializableMembers) do
 				local varValue = class.serializeMember(classMembers, varName)
 				if varValue then
-					if varValue.__type == TABLE_TYPE.Object then
+					if varValue.__type == TABLE_TYPE.OBJECT then
 						tMembers[varName] = varValue:serialize()
 					else
 						tMembers[varName] = varValue
@@ -391,9 +397,9 @@ end
 --- @param t table
 --- @return table Object of specific class.
 function Object:unserialize(t)
-	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 
-	local class = Class.allClass[t.__className].class
+	local class = allClass[t.__className].class
 	local obj = class:new() -- Must allow call `constructor` without arguments.
 
 	while class do
@@ -437,7 +443,7 @@ end
 ---       3. Needs re-generate members when `members` not include all members.
 --- @param members table List of member name.
 function Object:setSerializableMembers(members)
-	assertFmt(self.__type == TABLE_TYPE.Class, "This function must call by class.")
+	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 	self.__serializableMembers = members
 end
 
@@ -513,8 +519,8 @@ local function test()
 
 	derived:delete()
 
-	Class.allClass["TestBase"] = nil
-	Class.allClass["TestDerived"] = nil
+	allClass["TestBase"] = nil
+	allClass["TestDerived"] = nil
 end
 
 test()

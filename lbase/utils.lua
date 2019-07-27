@@ -28,7 +28,7 @@ function Utils.update(module)
 	local newModule = require(module)
 
 	-- Copy all value into old module to ensure all old reference can be update.
-	if oldModule.__type == TABLE_TYPE.Class then
+	if oldModule.__type == TABLE_TYPE.CLASS then
 		assertFmt(newModule.__type == oldModule.__type, "Cannot change type while update module, new type %s, old type %s.", newModule.__type or "nil", oldModule.__type or "nil")
 		table.clone(newModule, oldModule)
 	else
@@ -41,7 +41,7 @@ function Utils.update(module)
 			end
 
 			if vType == "table" then
-				if v.__type == TABLE_TYPE.Class then
+				if v.__type == TABLE_TYPE.CLASS then
 					if oldV then
 						assertFmt(v.__type == oldV.__type, "Cannot change type while update module, new type %s, old type %s.", v.__type or "nil", oldV.__type or "nil")
 						table.clone(v, oldV)
@@ -100,7 +100,7 @@ function Utils.serialize(t, optimize)
 
 	local processedTable = {}
 	local function process(t, name, deep)
-		if t.__type == TABLE_TYPE.Object then
+		if t.__type == TABLE_TYPE.OBJECT then
 			t = t:serialize()
 		end
 

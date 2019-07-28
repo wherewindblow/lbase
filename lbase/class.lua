@@ -229,12 +229,14 @@ end
 function Object:createFunction(funcName, originFunc)
 	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 	local className = self.__className
+	local OBJECT_TYPE = TABLE_TYPE.OBJECT
 	local function funcWrapper(self, ...)
-		if self.__type == TABLE_TYPE.OBJECT then
+		if self.__type == OBJECT_TYPE then
 			local classMembers = self.__members[className]
 			if not classMembers then
 				classMembers = {
 					__type = TABLE_TYPE.OBJECT, -- Optimize get type operation.
+					__members = self.__members, -- Optimize get members operation.
 					__isClassMembers = true,
 				}
 

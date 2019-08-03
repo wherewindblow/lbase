@@ -181,13 +181,23 @@ function string.endswith(s, pattern)
 	return endPos == string.len(s)
 end
 
-local function localVariables(level)
-	level = level + 1 -- Outside level.
+local VAR_TYPE = {
+	LOCAL = 1,
+	UPVALUE = 2,
+}
+
+local function variablesStr(varType, arg)
+	local getVarFunc
+	if varType == VAR_TYPE.LOCAL then
+		getVarFunc = debug.getlocal
+	else
+		getVarFunc = debug.getupvalue
+	end
 	local localNum = 1
 	local str
 
 	while true do
-		local name, value = debug.getlocal(level, localNum)
+		local name, value = getVarFunc(arg, localNum)
 		if not name then
 			break
 		end
@@ -244,7 +254,6 @@ local function fulltraceback(level)
         end
 
         -- Add function name.
-        local isClassFuncWrapper
         if stringlen(funcInfo.namewhat) ~= 0 then
             traceInfo = format("%s in function '%s'", traceInfo, funcInfo.name or "?")
         else
@@ -267,17 +276,19 @@ local function fulltraceback(level)
             end
         end
 
-        if not isClassFuncWrapper then
-            -- Add general trace info.
-            tableinsert(traceList, traceInfo)
+		-- Add general trace info.
+		tableinsert(traceList, traceInfo)
 
-            -- Add all local variables.
-            tableinsert(traceList, localVariables(level))
+		-- Add all local variables.
+		local varLevel = level + 1 -- Outside level.
+		local localVarStr = variablesStr(VAR_TYPE.LOCAL, varLevel)
+		tableinsert(traceList, localVarStr)
 
-            showLevel = showLevel + 1
-        end
+		-- Add all upvalue.
+		local upvalueStr = variablesStr(VAR_TYPE.UPVALUE, funcInfo.func)
+		tableinsert(traceList, upvalueStr)
 
-        isClassFuncWrapper = nil
+		showLevel = showLevel + 1
         level = level + 1
     end
 

@@ -305,7 +305,8 @@ function debug.fulltraceback(level)
         return msg
     end
 
-    return "debug.fulltraceback internal error: " .. msg
+	local traceback = debug.traceback(level)
+    return string.format("debug.fulltraceback internal error: %s\n%s", msg, traceback)
 end
 
 ---

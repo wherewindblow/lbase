@@ -66,8 +66,15 @@ function LruCache:getCapacity()
 	return self.m_capacity
 end
 
---- Sets capacity. If size is over capacity will shrink cache.
+--- Sets capacity. If new capacity is less than old, it'll shrink cache.
 function LruCache:setCapacity(capacity)
+	if capacity < self.m_capacity then
+		while self.m_recentList:size() > capacity do
+			local uselessKey = self.m_recentList:front()
+			self.m_recentList:removeFront()
+			self.m_cacheList[uselessKey] = nil
+		end
+	end
 	self.m_capacity = capacity
 end
 
@@ -96,6 +103,11 @@ local function test()
 	assert(not lru:getCache(1))
 	assert(lru:size() == lru:getCapacity())
 	assert(lru:size() == beforeSize)
+
+	local smallSize = 3
+	lru:setCapacity(smallSize)
+	assert(lru:size() == smallSize)
+	assert(lru:size() == lru:getCapacity())
 end
 
 test()

@@ -9,6 +9,7 @@ local LBase = {
 	Queue = require("lbase/queue"),
 	LruCache = require("lbase/lru_cache"),
 	Event = require("lbase/event"),
+    ModificationCollector = require("lbase/modification_collector"),
 }
 
 return LBase

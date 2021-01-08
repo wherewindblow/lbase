@@ -11,6 +11,7 @@ local LBase = {
 	Event = require("lbase/event"),
     ModificationCollector = require("lbase/modification_collector"),
 	Debugger = require("lbase/debugger"),
+	WordsSearcher = require("lbase/words_searcher"),
 }
 
 return LBase

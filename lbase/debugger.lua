@@ -5,7 +5,7 @@
 --- 3、Into debugger mode.
 --- 4、Debug(print or do something else).
 ---
---- Your can import those function into global to use conveniently in debug.
+--- Your can import those function into global to use conveniently in debug mode.
 --- p = Debugger.printLocal
 --- pa = Debugger.printAllLocal
 

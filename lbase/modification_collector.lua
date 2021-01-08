@@ -5,8 +5,9 @@ local ModificationCollector = {}
 
 ---
 --- Adds monitor for container. And then all modification of container will be record.
---- @param container table
-function ModificationCollector:addMonitor(container)
+--- @param tb table
+function ModificationCollector:addMonitor(tb)
+	local container = {}
 	local proxy = {
 		__hasModify = nil,
 		__isAllModify = true,
@@ -64,6 +65,10 @@ function ModificationCollector:addMonitor(container)
 	}
 
 	setmetatable(proxy, metatable)
+
+	for k, v in pairs(tb) do
+		proxy[k] = v
+	end
 	return proxy
 end
 
@@ -85,15 +90,10 @@ local function innerCollect(proxy, notAllModified)
 			data[IS_ALL_MODIFIED_KEY] = true
 		end
 		for key, value in pairs(container) do
-			if ppp then print(key, value) end
 			if type(value) ~= "table" then
 				data[key] = value
 			else
 				value = innerCollect(value, true)
-				if ppp then
-					print(key)
-					table.print(value)
-				end
 				data[key] = value
 			end
 		end
@@ -142,6 +142,7 @@ local function test()
 	--table.print(modifiedData1)
 	assert(modifiedData1.name == module.name)
 	assert(modifiedData1.t1.v == module.t1.v)
+	assert(modifiedData1.num == module.num)
 	assert(modifiedData1.t2.v == module.t2.v)
 	assert(modifiedData1[IS_ALL_MODIFIED_KEY])
 
@@ -164,13 +165,13 @@ local function test()
 	-- Add new table and init with number and table.
 	module.t3 = { v = 6, t4 = { v = 7 } }
 	--table.print(module)
-	--ppp = true
 	local modifiedData3 = ModificationCollector:collectModifiedData(module)
-	table.print(modifiedData3)
+	--table.print(modifiedData3)
 	assert(modifiedData3.t1.newTable == module.t1.newTable)
 	assert(modifiedData3.t1[IS_ALL_MODIFIED_KEY])
-	assert(modifiedData3.t2.v == module.t2.v)
-	assert(modifiedData3.t2[IS_ALL_MODIFIED_KEY])
+	assert(modifiedData3.t3.v == module.t3.v)
+	assert(modifiedData3.t3.t4.v == module.t3.t4.v)
+	assert(modifiedData3.t3[IS_ALL_MODIFIED_KEY])
 	assert(not modifiedData3.name)
 	assert(not modifiedData3.num)
 end

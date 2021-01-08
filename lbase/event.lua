@@ -1,4 +1,4 @@
-
+--- @module Event
 local Event = {
 	m_eventList = {},
 }

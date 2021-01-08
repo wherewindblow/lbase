@@ -1,6 +1,7 @@
 local IS_ALL_MODIFIED_KEY = "__isAllModify"
 local NIL_VALUE = "__nil"
 
+--- @module ModificationCollector
 local ModificationCollector = {}
 
 ---

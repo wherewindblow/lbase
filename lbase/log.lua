@@ -1,5 +1,6 @@
 local Class = require("lbase/class")
 
+--- @module Log
 local Log = {}
 
 ---

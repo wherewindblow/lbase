@@ -181,6 +181,21 @@ function string.endswith(s, pattern)
 	return endPos == string.len(s)
 end
 
+function string.safeformat(fmt, ...)
+	local argsNum = select("#", ...)
+	if argsNum == 0 then
+		return fmt
+	end
+	local args = {...}
+	local ok, msg = pcall(function ()
+		return format(fmt, unpack(args, 1, argsNum))
+	end)
+	if not ok then
+		msg = msg .. " > " .. debug.fulltraceback(2)
+	end
+	return msg
+end
+
 local VAR_TYPE = {
 	LOCAL = 1,
 	UPVALUE = 2,

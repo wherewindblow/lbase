@@ -7,6 +7,7 @@ local LBase = {
 	Log = require("lbase/log"),
 	LinkedList = require("lbase/linked_list"),
 	Queue = require("lbase/queue"),
+	MinHeap = require("lbase/min_heap"),
 	LruCache = require("lbase/lru_cache"),
 	Event = require("lbase/event"),
     ModificationCollector = require("lbase/modification_collector"),

@@ -8,6 +8,7 @@ local format = string.format
 local stringlen = string.len
 local stringsub = string.sub
 local stringgsub = string.gsub
+local mathfloor = math.floor
 local TABLE_TYPE = Class.TABLE_TYPE
 local assertFmt = assertFmt
 
@@ -67,7 +68,7 @@ function Utils.update(module)
 	package.loaded[module] = oldModule
 end
 
-local function storeableString(str)
+local function serializeStr(str)
 	local rawTag = "[[raw]]"
 	local rawTagLen = stringlen(rawTag)
 
@@ -77,6 +78,14 @@ local function storeableString(str)
 	else
 		str = format("\"%s\"", str)
 		return stringgsub(str, "\n", "\\\n")
+	end
+end
+
+local function serializeNum(value)
+	if mathfloor(value) == value then
+		return format("%d", value)
+	else
+		return tostring(value)
 	end
 end
 
@@ -127,21 +136,21 @@ function Utils.serialize(t, optimize)
 
 			local kStr
 			if kType == "string" then
-				kStr = storeableString(k)
+				kStr = serializeStr(k)
 			else
-				kStr = tostring(k)
+				kStr = serializeNum(k)
 			end
 
 			local vStr
 			if vType == "table" then
-				local vName = format("%s.%s", name, tostring(k))
+				local vName = format("%s.%s", name, kStr)
 				assertFmt(not processedTable[v], "Process %s repeat with %s, cannot serialize circle reference table.", vName, processedTable[v])
 				processedTable[v] = vName
 				vStr = process(v, vName, deep + 1)
 			elseif vType == "string" then
-				vStr = storeableString(v)
+				vStr = serializeStr(v)
 			else
-				vStr = tostring(v)
+				vStr = serializeNum(v)
 			end
 
 			if optimize then
@@ -209,7 +218,8 @@ local function testSerialize()
 			d = {
 				"e"
 			}
-		}
+		},
+		n = 9007199254740991
 	}
 	local tStr = serialize(t)
 
@@ -217,7 +227,10 @@ local function testSerialize()
 	assert(t2[1] == "a")
 	assert(t2.b[1] == "c")
 	assert(t2.b.d[1] == "e")
-	assert(serialize(t2) == tStr)
+	assert(t2.n == 9007199254740991)
+	t2.b.d[1] = "x" -- Trigger next assert.
+	local path, v1, v2 = table.diff(t, t2)
+	assert(not path)
 
 	-- Serialize object.
 	local Queue = require("lbase/queue")

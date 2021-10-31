@@ -8,6 +8,7 @@ local format = string.format
 local stringlen = string.len
 local stringsub = string.sub
 local tableinsert = table.insert
+local mathfloor = math.floor
 
 ---
 --- Returns size of table.
@@ -141,6 +142,58 @@ function table.print(t)
 end
 
 ---
+--- Differentiate two table.
+--- @param t1 table
+--- @param t2 table
+--- @return string|any|any Path and variable in two table.
+function table.diff(t1, t2)
+	if t1 == t2 then
+		return
+	end
+
+	local t1Type = type(t1)
+	local t2Type = type(t2)
+	if t1Type ~= t2Type then
+		return nil, t1, t2
+	end
+
+	if t1Type ~= "table" then
+		if t1 ~= t2 then
+			return nil, t1, t2
+		end
+		return
+	end
+
+	for k1, v1 in pairs(t1) do
+		local v2 = t2[k1]
+		if v2 == nil then
+			return tostring(k1), v1, v2
+		end
+		local path, diffVar1, diffVar2 = table.diff(v1, v2)
+		if diffVar1 then
+			if path then
+				return format("%s.%s", k1, path), diffVar1, diffVar2
+			else
+				return k1, diffVar1, diffVar2
+			end
+		end
+	end
+
+	for k2, v2 in pairs(t2) do
+		local v1 = t1[k2]
+		if v1 == nil then
+			local k2Str
+			if type(k2) == "number" and mathfloor(k2) == k2 then
+				k2Str = format("%d", k2)
+			else
+				k2Str = tostring(k2)
+			end
+			return k2Str, v1, v2
+		end
+	end
+end
+
+---
 --- Splits string into table.
 --- @param s string
 --- @param pattern string
@@ -227,7 +280,11 @@ local function variablesStr(varType, arg)
 		-- Add variable value.
 		local valueType = type(value)
 		if valueType == "number" then
-			str = format("%s: %s", str, tostring(value))
+			if mathfloor(value) == value then
+				str = format("%s: %d", str, value)
+			else
+				str = format("%s: %s", str, tostring(value))
+			end
 		elseif valueType == "string" then
 			str = format("%s: '%s'", str, tostring(value))
 		elseif valueType == "table" and type(value.getSnapshot) == "function" then

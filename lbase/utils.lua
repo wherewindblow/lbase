@@ -228,7 +228,7 @@ local function testSerialize()
 	assert(t2.b[1] == "c")
 	assert(t2.b.d[1] == "e")
 	assert(t2.n == 9007199254740991)
-	t2.b.d[1] = "x" -- Trigger next assert.
+	--t2.b.d[1] = "x" -- Trigger next assert.
 	local path, v1, v2 = table.diff(t, t2)
 	assert(not path)
 

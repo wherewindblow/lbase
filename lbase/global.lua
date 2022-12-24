@@ -7,8 +7,10 @@ local format = string.format
 ---
 --- Prints any value.
 function printAny(...)
-	for _, v in ipairs({...}) do
-		table.print(v)
+	local argsNum = select("#", ...)
+	local args = {...}
+	for i = 1, argsNum do
+		table.print(args[i])
 	end
 end
 

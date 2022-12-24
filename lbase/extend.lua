@@ -101,6 +101,10 @@ local printSetting = {
 --- Prints table.
 --- @param t table
 function table.print(t)
+	if t == nil then
+		print("nil")
+		return
+	end
 	local printed = {}
 	local function innerPrint(any, deep, name)
 		if deep > printSetting.maxDeep then

@@ -3,7 +3,9 @@ local type = type
 local pairs = pairs
 local next = next
 local tostring = tostring
+local print = print
 local assert = assert
+local error = error
 local format = string.format
 local stringlen = string.len
 local stringsub = string.sub
@@ -391,3 +393,75 @@ function debug.errorhook(errMsg)
 	print(errMsg)
 	print(debug.fulltraceback(2))
 end
+
+local Extend = {}
+
+---
+--- Prints any value.
+function Extend.printAny(...)
+	local argsNum = select("#", ...)
+	local args = {...}
+	for i = 1, argsNum do
+		table.print(args[i])
+	end
+end
+
+---
+--- Error with format message.
+--- @param fmt string Support default fmt.
+function Extend.errorFmt(fmt, ...)
+	local msg = fmt and format(fmt, ...)
+	error(msg)
+end
+
+---
+--- Assert with format message to optimize string format.
+--- @param fmt string Support default fmt.
+function Extend.assertFmt(v, fmt, ...)
+	if not v then
+		local msg = fmt and format(fmt, ...)
+		assert(v, msg)
+	end
+end
+
+local function compareAssertFormat()
+	local assertFmt = Extend.assertFmt
+
+	local exp
+	local assertTimes = 1000000
+	local function computeTimeUse(func)
+		local startTime = os.clock()
+		func()
+		local finishTime = os.clock()
+		print(finishTime - startTime)
+	end
+
+	computeTimeUse(function ()
+		for i = 1, assertTimes do
+			assert(not exp, format("failure when i is %d%s", i, "test"))
+		end
+	end)
+
+	computeTimeUse(function ()
+		for i = 1, assertTimes do
+			assertFmt(not exp, "failure when i is %d%s", i, "test")
+		end
+	end)
+
+	computeTimeUse(function ()
+		for i = 1, assertTimes do
+			if exp then
+				error(format("failure when i is %d%s", i, "test"))
+			end
+		end
+	end)
+end
+
+--compareAssertFormat()
+
+--assert timeUse          0.53s
+--assertFmt timeUse       0.05s
+--if assert timeUse       0.01s
+
+
+return Extend

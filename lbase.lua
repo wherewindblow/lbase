@@ -1,7 +1,5 @@
-require("lbase/global")
-require("lbase/extend")
-
 local LBase = {
+	Extend = require("lbase/extend"),
 	Class = require("lbase/class"),
 	Utils = require("lbase/utils"),
 	Log = require("lbase/log"),

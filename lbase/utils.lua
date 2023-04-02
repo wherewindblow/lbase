@@ -1,3 +1,4 @@
+local Extend = require("lbase/extend")
 local Class = require("lbase/class")
 
 -- Optimize.
@@ -10,7 +11,7 @@ local stringsub = string.sub
 local stringgsub = string.gsub
 local mathfloor = math.floor
 local TABLE_TYPE = Class.TABLE_TYPE
-local assertFmt = assertFmt
+local assertFmt = Extend.assertFmt
 
 local Utils = {}
 

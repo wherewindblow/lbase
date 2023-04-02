@@ -12,6 +12,20 @@
 ---    When out of class function to use object, all member create in object is public.
 --- TODO: Support private function.
 
+local Extend = require("lbase/extend")
+
+-- Optimize.
+local pairs = pairs
+local type = type
+local next = next
+local rawget = rawget
+local rawset = rawset
+local getmetatable = getmetatable
+local setmetatable = setmetatable
+local assertFmt = Extend.assertFmt
+local errorFmt = Extend.errorFmt
+
+
 local Class = {}
 
 --- Table type to distinguish general table and special table.
@@ -55,17 +69,6 @@ local function super(Class)
 end
 
 Class.super = super
-
--- Optimize.
-local pairs = pairs
-local type = type
-local next = next
-local rawget = rawget
-local rawset = rawset
-local getmetatable = getmetatable
-local setmetatable = setmetatable
-local assertFmt = assertFmt
-local errorFmt = errorFmt
 
 
 ---

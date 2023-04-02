@@ -9,6 +9,8 @@
 --- p = Debugger.printLocal
 --- pa = Debugger.printAllLocal
 
+local Extend = require("lbase/extend")
+
 --- @module Debugger
 local Debugger = { m_allBreakpoints = {} }
 
@@ -128,7 +130,7 @@ end
 ---
 --- Prints all local variable.
 function Debugger.printAllLocal(level)
-	printAny(Debugger.getAllLocal(level + 4))
+	Extend.printAny(Debugger.getAllLocal(level + 4))
 end
 
 return Debugger

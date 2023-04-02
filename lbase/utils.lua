@@ -173,15 +173,64 @@ function Utils.serialize(t, optimize)
 	return process(t, rootName, 0)
 end
 
+local DEFAULT_LIMIT_INST = 300000
+
 ---
 --- Unserialize string to table or object.
 --- NOTE: `str` is a table string and not include return.
 --- @param str string
---- @return table or object
-function Utils.unserialize(str)
+--- @param protect string Default value is true. Protect execution and avoid malware to call function and endless loop.
+--- @param instCountLimit number Protect argument. Limit instructions to execute in `str` and it's valid in protect mode.
+---		Default value is 300000 and it's enough to unserialize a table with 100000 elements.
+--- @return table or object, error message.
+function Utils.unserialize(str, protect, instCountLimit)
+	if protect == nil then
+		protect = true
+	end
+
+	if protect then
+		instCountLimit = instCountLimit or DEFAULT_LIMIT_INST
+	end
+
 	local chunk, err = loadstring("return " .. str)
-	assert(chunk, err)
-	local t = chunk()
+    if not chunk then
+        return nil, err
+    end
+
+	local ok, t
+	if protect then
+        local count = 0
+        local ignore
+        local function forbiddenAction(event, line)
+            count = count + 1
+            -- Ignore count.
+            --  1: xpcall
+            --  2: return
+            if count <= 2 or ignore then
+                return
+            end
+            local msg
+            if event == "call" then
+                msg = "Forbidden to call function."
+            elseif event == "count" then
+                msg = string.format("Forbidden to execute instructions more that %d", instCountLimit)
+            end
+            error(msg or "Unknow hook")
+        end
+        debug.sethook(forbiddenAction, "c", instCountLimit)
+        ok, t = pcall(chunk)
+        ignore = true -- Avoid trigger error in forbiddenAction.
+        debug.sethook()
+        if not ok then
+            return nil, t -- t is error message.
+        end
+    else
+		t = chunk()
+	end
+
+	if not t then
+		return
+	end
 	if t.__className then
 		return Class.Object:unserialize(t)
 	end
@@ -268,6 +317,10 @@ local function testSerialize()
 
 	Class.allClass["TestSerializeBase"] = nil
 	Class.allClass["TestSerializeDerived"] = nil
+
+    local unsafeStr = "print('I can call function')"
+    local _, err = unserialize(unsafeStr, true)
+    assertFmt(err)
 end
 
 testSerialize()

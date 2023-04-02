@@ -11,7 +11,7 @@ function LinkedList:constructor()
 	self.m_head.next = self.m_tail
 	self.m_tail.previous = self.m_head
 	self.m_size = 0
-	self.m_nodeList = {}
+	self.m_nodeMap = {}
 end
 
 ---
@@ -31,7 +31,7 @@ function LinkedList:pushFront(value)
 	self.m_head.next.previous = node
 	self.m_head.next = node
 	self.m_size = self.m_size + 1
-	self.m_nodeList[node] = true
+	self.m_nodeMap[node] = true
 	return node
 end
 
@@ -44,7 +44,7 @@ function LinkedList:pushBack(value)
 	self.m_tail.previous.next = node
 	self.m_tail.previous = node
 	self.m_size = self.m_size + 1
-	self.m_nodeList[node] = true
+	self.m_nodeMap[node] = true
 	return node
 end
 
@@ -60,7 +60,7 @@ function LinkedList:remove(value)
 			node.previous.next = node.next
 			node.next.previous = node.previous
 			self.m_size = self.m_size - 1
-			self.m_nodeList[node] = nil
+			self.m_nodeMap[node] = nil
 			return node
 		end
 		node = node.next
@@ -79,7 +79,7 @@ function LinkedList:removeFront()
 	self.m_head.next = node.next
 	node.next.previous = self.m_head
 	self.m_size = self.m_size - 1
-	self.m_nodeList[node] = nil
+	self.m_nodeMap[node] = nil
 	return node
 end
 
@@ -95,7 +95,7 @@ function LinkedList:removeBack()
 	self.m_tail.previous = node.previous
 	node.previous.next = self.m_tail
 	self.m_size = self.m_size - 1
-	self.m_nodeList[node] = nil
+	self.m_nodeMap[node] = nil
 	return node
 end
 
@@ -111,7 +111,7 @@ function LinkedList:removeIf(isTarget)
 			node.previous.next = node.next
 			node.next.previous = node.previous
 			self.m_size = self.m_size - 1
-			self.m_nodeList[node] = nil
+			self.m_nodeMap[node] = nil
 			table.insert(nodeList, node)
 		end
 		node = node.next
@@ -120,11 +120,11 @@ function LinkedList:removeIf(isTarget)
 end
 
 function LinkedList:removeNode(node)
-	assert(self.m_nodeList[node], "Invalid node in LinkedList.")
+	assert(self.m_nodeMap[node], "Invalid node in LinkedList.")
 	node.previous.next = node.next
 	node.next.previous = node.previous
 	self.m_size = self.m_size - 1
-	self.m_nodeList[node] = nil
+	self.m_nodeMap[node] = nil
 end
 
 ---
@@ -148,7 +148,7 @@ function LinkedList:moveToFront(node)
 	next.previous = node
 	node.next = next
 	node.previous = self.m_head
-	self.m_nodeList[node] = true
+	self.m_nodeMap[node] = true
 	self.m_size = self.m_size + 1
 end
 
@@ -161,7 +161,7 @@ function LinkedList:moveToBack(node)
 	previous.next = node
 	node.next = self.m_tail
 	node.previous = previous
-	self.m_nodeList[node] = true
+	self.m_nodeMap[node] = true
 	self.m_size = self.m_size + 1
 end
 

@@ -9,7 +9,7 @@ local LruCache = Class.Object:inherit("LruCache")
 --- @param capacity number
 function LruCache:constructor(capacity)
 	self.m_recentList = LinkedList:new()
-	self.m_cacheList = {}
+	self.m_cacheMap = {}
 	self.m_capacity = capacity
 end
 
@@ -19,7 +19,7 @@ end
 --- @param key any
 --- @param data any
 function LruCache:addCache(key, data)
-	local cache = self.m_cacheList[key]
+	local cache = self.m_cacheMap[key]
 	if cache then
 		self.m_recentList:moveToBack(cache.node)
 		cache.data = data
@@ -29,18 +29,18 @@ function LruCache:addCache(key, data)
 	if self.m_recentList:size() + 1 > self.m_capacity then
 		local uselessKey = self.m_recentList:front()
 		self.m_recentList:removeFront()
-		self.m_cacheList[uselessKey] = nil
+		self.m_cacheMap[uselessKey] = nil
 	end
 
 	local node = self.m_recentList:pushBack(key)
-	self.m_cacheList[key] = { data = data, node = node }
+	self.m_cacheMap[key] = { data = data, node = node }
 end
 
 --- Gets cache data.
 --- @param key any
 --- @return any Cache data.
 function LruCache:getCache(key)
-	local cache = self.m_cacheList[key]
+	local cache = self.m_cacheMap[key]
 	if cache then
 		self.m_recentList:moveToBack(cache.node)
 		return cache.data
@@ -57,7 +57,7 @@ function LruCache:pairs()
 			return nextKey, nextCache.data
 		end
 	end
-	return next, self.m_cacheList, nil
+	return next, self.m_cacheMap, nil
 end
 
 ---
@@ -72,7 +72,7 @@ function LruCache:setCapacity(capacity)
 		while self.m_recentList:size() > capacity do
 			local uselessKey = self.m_recentList:front()
 			self.m_recentList:removeFront()
-			self.m_cacheList[uselessKey] = nil
+			self.m_cacheMap[uselessKey] = nil
 		end
 	end
 	self.m_capacity = capacity

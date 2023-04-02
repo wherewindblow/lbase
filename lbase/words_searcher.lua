@@ -61,7 +61,7 @@ function WordsSearcher:constructor()
 	self.m_wordsProcessor = Utf8Words -- Must provide len(s) and sub(s, i, j), if use string will only support ASCII.
 	self.m_keyRoot = {
 		son = {},
-		matchList = {},
+		matchMap = {},
 	}
 	self.m_allWords = {}
 end
@@ -74,13 +74,13 @@ function WordsSearcher:addKey(key, words)
 		local word = self.m_wordsProcessor.sub(key, i, i)
 		tree.son[word] = tree.son[word] or {
 			son = {},
-			matchList = {},
+			matchMap = {},
 		}
 
 		tree = tree.son[word]
 	end
 
-	tree.matchList[words] = true
+	tree.matchMap[words] = true
 end
 
 ---
@@ -117,7 +117,7 @@ function WordsSearcher:removeKey(key, words)
 		tree = tree.son[word]
 	end
 
-	tree.matchList[words] = nil
+	tree.matchMap[words] = nil
 end
 
 ---
@@ -156,7 +156,7 @@ function WordsSearcher:findKey(key)
 		tree = tree.son[word]
 	end
 
-	return tree.matchList
+	return tree.matchMap
 end
 
 local function test()
@@ -165,9 +165,9 @@ local function test()
 	searcher:addWords("Ryan")
 	searcher:addWords("Tom")
 
-	local matchList = searcher:findKey("ry")
+	local matchMap = searcher:findKey("ry")
 	local matchCount = 0
-	for words, _ in pairs(matchList) do
+	for words, _ in pairs(matchMap) do
 		if words == "Ryan" or words == "Mary" then
 			matchCount = matchCount + 1
 		end
@@ -175,14 +175,14 @@ local function test()
 	assert(matchCount == 2)
 
 	searcher:removeWords("Mary")
-	matchList = searcher:findKey("ry")
-	assert(table.size(matchList) == 1)
+	matchMap = searcher:findKey("ry")
+	assert(table.size(matchMap) == 1)
 
 	searcher:addWords("1大师2")
 	searcher:addWords("1大师傅2")
-	matchList = searcher:findKey("师")
+	matchMap = searcher:findKey("师")
 	matchCount = 0
-	for words, _ in pairs(matchList) do
+	for words, _ in pairs(matchMap) do
 		if words == "1大师2" or words == "1大师傅2" then
 			matchCount = matchCount + 1
 		end

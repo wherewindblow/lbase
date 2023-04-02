@@ -6,7 +6,7 @@
 --- 4. Inherit from base class to object oriented.
 --- 5. Expect call function to ensure base class constructor to be call by drived class constructor when necessary.
 --- 6. Delete function will auto call base class destructor after call drived class destructor.
---- 7. Avoid cover general function with virtual function list. All virtual function must to add virtual attribute.
+--- 7. Avoid cover general function with virtual function map. All virtual function must to add virtual attribute.
 --- 8. Avoid derived class member cover base class member. NOTE: Only have effect when use in function. In out side of function have not effect.
 ---    When in class function to use self, all member create in self is private.
 ---    When out of class function to use object, all member create in object is public.
@@ -43,7 +43,7 @@ local Object = {
 	__className = "Object",
 	__type = Class.TABLE_TYPE.CLASS,
 	__expectCall = {},
-	__virtualFuncList = {},
+	__virtualFuncMap = {},
 }
 
 Class.Object = Object
@@ -168,7 +168,7 @@ function Object:inherit(className)
 		__className = className,
 		__type = TABLE_TYPE.CLASS,
 		__expectCall = {},
-		__virtualFuncList = {},
+		__virtualFuncMap = {},
 	}
 
 	local metatable = {
@@ -184,8 +184,8 @@ function Object:inherit(className)
 					local isVirtualFunc
 					local curClass = class
 					while curClass do
-						local virtualFuncList = curClass.__virtualFuncList
-						if virtualFuncList[funcName] then
+						local virtualFuncMap = curClass.__virtualFuncMap
+						if virtualFuncMap[funcName] then
 							isVirtualFunc = true
 							break
 						end
@@ -355,7 +355,7 @@ function Object:setToVirtual(funcName)
 	assertFmt(self.__type == TABLE_TYPE.CLASS, "This function must call by class.")
 	local func = rawget(self, funcName)
 	assertFmt(func, "Not exist function %s:%s", self.__className, funcName)
-	self.__virtualFuncList[funcName] = true
+	self.__virtualFuncMap[funcName] = true
 end
 
 ---

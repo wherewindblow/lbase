@@ -10,10 +10,16 @@
 --- pa = Debugger.printAllLocal
 
 local Extend = require("lbase/extend")
+local Class = require("lbase/class")
 
---- @module Debugger
-local Debugger = { m_allBreakpoints = {} }
+--- @class Debugger : Object
+local Debugger = Class.Object:inherit("Debugger")
 
+---
+--- Constructs debugger object.
+function Debugger:constructor()
+	self.m_allBreakpoints = {}
+end
 ---
 --- Adds line breakpoint and it can be trigger when run into special line.
 function Debugger:addLineBreakpoint(filename, line)

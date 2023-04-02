@@ -2,12 +2,15 @@ local IS_ALL_MODIFIED_KEY = "__isAllModify"
 local NIL_VALUE = "__nil"
 
 --- @module ModificationCollector
-local ModificationCollector = {}
+local ModificationCollector = {
+	IS_ALL_MODIFIED_KEY = IS_ALL_MODIFIED_KEY,
+	NIL_VALUE = NIL_VALUE,
+}
 
 ---
 --- Adds monitor for container. And then all modification of container will be record.
 --- @param tb table
-function ModificationCollector:addMonitor(tb)
+function ModificationCollector.addMonitor(tb)
 	local container = {}
 	local proxy = {
 		__hasModify = nil,
@@ -55,7 +58,7 @@ function ModificationCollector:addMonitor(tb)
 
 			-- Add to container.
 			if type(value) == "table" then
-				value = self:addMonitor(value)
+				value = ModificationCollector.addMonitor(value)
 				rawset(value, "__parent", proxy)
 				rawset(value, "__parentKey", key)
 			end
@@ -122,13 +125,13 @@ end
 --- NOTE: Proxy must be a table that generate by `addMonitor`, and it's root proxy not a sub proxy.
 ---       If pass a sub proxy will clear modification record and cannot collect in root proxy again.
 --- @param proxy table
-function ModificationCollector:collectModifiedData(proxy)
+function ModificationCollector.collectModifiedData(proxy)
 	return innerCollect(proxy)
 end
 
 local function test()
 	-- Init table with number and table.
-	local module = ModificationCollector:addMonitor({
+	local module = ModificationCollector.addMonitor({
 		name = "testModule",
 		t1 = { v = 1 }
 	})
@@ -139,7 +142,7 @@ local function test()
 	-- Add table.
 	module.t2 = { v = 3 }
 	--table.print(module)
-	local modifiedData1 = ModificationCollector:collectModifiedData(module)
+	local modifiedData1 = ModificationCollector.collectModifiedData(module)
 	--table.print(modifiedData1)
 	assert(modifiedData1.name == module.name)
 	assert(modifiedData1.t1.v == module.t1.v)
@@ -154,7 +157,7 @@ local function test()
 	-- Remove number.
 	module.num = nil
 	--table.print(module)
-	local modifiedData2 = ModificationCollector:collectModifiedData(module)
+	local modifiedData2 = ModificationCollector.collectModifiedData(module)
 	--table.print(modifiedData2)
 	assert(modifiedData2.t1.v == module.t1.v)
 	assert(modifiedData2.t1.new == module.t1.new)
@@ -166,7 +169,7 @@ local function test()
 	-- Add new table and init with number and table.
 	module.t3 = { v = 6, t4 = { v = 7 } }
 	--table.print(module)
-	local modifiedData3 = ModificationCollector:collectModifiedData(module)
+	local modifiedData3 = ModificationCollector.collectModifiedData(module)
 	--table.print(modifiedData3)
 	assert(modifiedData3.t1.newTable == module.t1.newTable)
 	assert(modifiedData3.t1[IS_ALL_MODIFIED_KEY])

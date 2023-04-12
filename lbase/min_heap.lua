@@ -1,7 +1,7 @@
 local Class = require("lbase/class")
 local floor = math.floor
 
---- @class clsMinHeap : Object
+--- @class MinHeap : Object
 local MinHeap = Class.Object:inherit("MinHeap")
 
 ---
